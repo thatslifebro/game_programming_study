@@ -5,6 +5,48 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
+    class SessionManager
+    {
+        static object _lock = new object();
+
+        public static void TestSession()
+        {
+            lock (_lock)
+            {
+
+            }
+        }
+        public static void Test()
+        {
+            lock (_lock)
+            {
+                UserManager.TestUser();
+            }
+        }
+    }
+
+    class UserManager
+    {
+        static object _lock = new object();
+
+        public static void Test()
+        {
+            //Monitor.TryEnter() //이렇게 try catch 로 deadlock걸렷을때 빠져나올지 이건 안좋은 방법.
+            lock (_lock)
+            {
+                SessionManager.TestSession();
+            }
+        }
+
+        public static void TestUser()
+        {
+            lock (_lock)
+            {
+
+            }
+        }
+    }
+
     class Program
     {
         static int number = 0;
@@ -12,29 +54,17 @@ namespace ServerCore
 
         static void Thread_1()
         {
-            for(int i=0; i < 1000000; i++)
+            for(int i=0; i < 10000; i++)
             {
-                //Monitor.Enter(_obj);
-                lock (_obj)
-                {
-                    number++;
-                }
-
-                // int temp = number; temp+=1; number=temp;
-
-                //Monitor.Exit(_obj);
+                SessionManager.Test();
             }
         }
 
         static void Thread_2()
         {
-            for(int i = 0; i < 1000000; i++)
+            for(int i = 0; i < 10000; i++)
             {
-                Monitor.Enter(_obj);
-
-                number--;// int temp = number; temp+=1; number=temp;
-
-                Monitor.Exit(_obj);
+                UserManager.Test();
             }
         }
 
@@ -54,8 +84,6 @@ namespace ServerCore
     
 }
 
-// 여러 쓰레드에서 쓰기 시작하면 lock 걸어야함. 임계영역
-// _obj라는 방을 만들어놓고 누군가 enter했으면 exit 하기전까진 사용 못함 (mutual exclusive)
-// 관리하기가 어려움. 중간에 return 때려버리면 exit안되서 문제발생 => deadlock.
-// try catch finally 로 exit 무조건 되게 할 수 있음. 하지만 좀 드럽다.
-// lock을 사용할 수 있다. 
+//a b 두변수를 다른 쓰레드가 각각 lock 했음. 다른 변수를 lock하고 싶은데 안됨 . 무한 대기 . deadlock
+// a 를 항상 먼저 lock걸기로 약속하면 회피 가능.
+// deadlock 완전히 막을 수는 없고 발생하면 추적햇서 해결 
