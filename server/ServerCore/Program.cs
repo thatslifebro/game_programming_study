@@ -5,72 +5,72 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
-    class SessionManager
+    class SpinLock
     {
-        static object _lock = new object();
+        volatile int _locked = 0;
 
-        public static void TestSession()
+        public void Acquire()
         {
-            lock (_lock)
-            {
+            //while (_locked==1)   이렇게 하면 0일 때 둘다 넘어가서 같이 1로 바꿀 수 있음.
+            //{                    한 놈은 0->1 다른 놈은 1->1 한 경우가 있다.
 
+            //}
+            //_locked = 1;
+
+
+            //while (true)  // 이거는 0을 1로 바꾼 경우만 해당. 1을 1로 바꾼 경우는 안됌.
+            //{
+            //    int original = Interlocked.Exchange(ref _locked, 1); // 하나의 쓰레드마다 original값이 다른것.
+            //    if (original == 0)
+            //        break;
+            //}
+
+            while (true)
+            {
+                int expected = 0;
+                int desired = 1;
+                if(Interlocked.CompareExchange(ref _locked, desired,expected)==expected)
+                {
+                    break;
+                }
             }
+            
+            
+            
         }
-        public static void Test()
+        public void Release()
         {
-            lock (_lock)
-            {
-                UserManager.TestUser();
-            }
-        }
-    }
-
-    class UserManager
-    {
-        static object _lock = new object();
-
-        public static void Test()
-        {
-            //Monitor.TryEnter() //이렇게 try catch 로 deadlock걸렷을때 빠져나올지 이건 안좋은 방법.
-            lock (_lock)
-            {
-                SessionManager.TestSession();
-            }
-        }
-
-        public static void TestUser()
-        {
-            lock (_lock)
-            {
-
-            }
+            _locked = 0;
         }
     }
 
     class Program
     {
-        static int number = 0;
-        static object _obj = new object();
+        static int _num = 0;
+        static SpinLock _lock = new SpinLock();
 
         static void Thread_1()
         {
-            for(int i=0; i < 10000; i++)
+            for(int i = 0; i < 100000; i++)
             {
-                SessionManager.Test();
+                _lock.Acquire();
+                _num++;
+                _lock.Release();
             }
         }
 
         static void Thread_2()
         {
-            for(int i = 0; i < 10000; i++)
+            for (int i = 0; i < 100000; i++)
             {
-                UserManager.Test();
+                _lock.Acquire();
+                _num--;
+                _lock.Release();
             }
         }
 
         static void Main(string[] args)
         {
-            
             Task t1 = new Task(Thread_1);
             Task t2 = new Task(Thread_2);
             t1.Start();
@@ -78,12 +78,11 @@ namespace ServerCore
 
             Task.WaitAll(t1, t2);
 
-            Console.WriteLine(number);
+            Console.WriteLine(_num);
+            
         }
     }
     
 }
 
-//a b 두변수를 다른 쓰레드가 각각 lock 했음. 다른 변수를 lock하고 싶은데 안됨 . 무한 대기 . deadlock
-// a 를 항상 먼저 lock걸기로 약속하면 회피 가능.
-// deadlock 완전히 막을 수는 없고 발생하면 추적햇서 해결 
+//spinlock 구현하기 
