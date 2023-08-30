@@ -5,40 +5,30 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
-    class SpinLock
+    class Lock
     {
-        volatile int _locked = 0;
-
+        // kernel 단에서 관리하는 bool 값.
+        //AutoResetEvent _available = new AutoResetEvent(true);//initial state true or false.
+        ManualResetEvent _available = new ManualResetEvent(true);
         public void Acquire()
         {
 
-            while (true)
-            {
-                int expected = 0;
-                int desired = 1;
-                if(Interlocked.CompareExchange(ref _locked, desired,expected)==expected)
-                {
-                    break;
-                }
-                //쉬다 올게 하면 spin lock 아닌 다른 것.
-                //Thread.Sleep(1); // 무조건 1ms 휴식
-                //Thread.Sleep(0); // 조건부 양보. 우선순위 높거나 같은 쓰레드에 양보. 
-                Thread.Yield(); // 관대한 양보. 다 먼저 해. 실행 가능한게 아예 없으면 함.
-            }
-            
-            
+            _available.WaitOne();// 입장 시도. auto reset event는 문닫기 자동.
+            _available.Reset(); //이라는게 원래있음 문닫기
+            // 이렇게 따로 하면 원자성이 만족안되서 return 값이 0이 안됨.
+            // lock 구현 시나리오와는 맞지 않음 (manual reset event)
             
         }
         public void Release()
         {
-            _locked = 0;
+            _available.Set(); // 문열기 .
         }
     }
 
     class Program
     {
         static int _num = 0;
-        static SpinLock _lock = new SpinLock();
+        static Lock _lock = new Lock();
 
         static void Thread_1()
         {
@@ -76,5 +66,6 @@ namespace ServerCore
     
 }
 
-//context switching 이란 멀티프로세스 환경에서 cpu가 interrupt요청으로 다음 프로세스를 실행할 때
-//기존 프로세스의 상태나 값을 저장하고 다음 프로세스를 위한 상태나 값을 불러오는 작업을 말한다.
+//제 3자가 lock이풀렷는지 확인해주고 알려주는 방법 : 제 3자가 kernel 쪽 사람이라 느림.(context switching이 필요하니)
+//auto reseet event, manual reeset event
+//다른 것들의 비해 느림.
