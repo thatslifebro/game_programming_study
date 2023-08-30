@@ -11,19 +11,6 @@ namespace ServerCore
 
         public void Acquire()
         {
-            //while (_locked==1)   이렇게 하면 0일 때 둘다 넘어가서 같이 1로 바꿀 수 있음.
-            //{                    한 놈은 0->1 다른 놈은 1->1 한 경우가 있다.
-
-            //}
-            //_locked = 1;
-
-
-            //while (true)  // 이거는 0을 1로 바꾼 경우만 해당. 1을 1로 바꾼 경우는 안됌.
-            //{
-            //    int original = Interlocked.Exchange(ref _locked, 1); // 하나의 쓰레드마다 original값이 다른것.
-            //    if (original == 0)
-            //        break;
-            //}
 
             while (true)
             {
@@ -33,6 +20,10 @@ namespace ServerCore
                 {
                     break;
                 }
+                //쉬다 올게 하면 spin lock 아닌 다른 것.
+                //Thread.Sleep(1); // 무조건 1ms 휴식
+                //Thread.Sleep(0); // 조건부 양보. 우선순위 높거나 같은 쓰레드에 양보. 
+                Thread.Yield(); // 관대한 양보. 다 먼저 해. 실행 가능한게 아예 없으면 함.
             }
             
             
@@ -85,4 +76,5 @@ namespace ServerCore
     
 }
 
-//spinlock 구현하기 
+//context switching 이란 멀티프로세스 환경에서 cpu가 interrupt요청으로 다음 프로세스를 실행할 때
+//기존 프로세스의 상태나 값을 저장하고 다음 프로세스를 위한 상태나 값을 불러오는 작업을 말한다.
