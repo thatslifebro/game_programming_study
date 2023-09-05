@@ -10,7 +10,32 @@ namespace ServerCore
 
     class Program
     {
-        
+        static Listener _listener = new Listener();
+
+        static void OnAcceptHandler(Socket clientSocket)
+        {
+            try
+            {
+                
+                //recv
+                byte[] recvBuff = new byte[1024];
+                int recvBytes = clientSocket.Receive(recvBuff);
+                string recvData = Encoding.UTF8.GetString(recvBuff, 0, recvBytes);
+                Console.WriteLine($"from client : {recvData}");
+
+                //send
+                byte[] sendBuff = Encoding.UTF8.GetBytes("welcome to server!");
+                clientSocket.Send(sendBuff);
+
+                clientSocket.Shutdown(SocketShutdown.Both);
+                clientSocket.Close();
+
+            } catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
         static void Main(string[] args)
         {
             //DNS
@@ -19,39 +44,16 @@ namespace ServerCore
             IPAddress ipAddr = ipHost.AddressList[0];
             IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
-            Socket listenSocket = new Socket(endPoint.AddressFamily,SocketType.Stream,ProtocolType.Tcp);
 
-            try
+            _listener.init(OnAcceptHandler,endPoint);
+            Console.WriteLine("Listenning...");
+
+            while (true)
             {
-                listenSocket.Bind(endPoint);
+                Thread.Sleep(1);
 
-                listenSocket.Listen(10); //동시 접속
-
-                while (true)
-                {
-                    Console.WriteLine("Listenning...");
-
-                    Socket clientSocket = listenSocket.Accept(); //blocking 넘어가지 못하면 대기 게임에선 blocking으로 처리되면 안됌 
-
-                    //recv
-                    byte[] recvBuff = new byte[1024];
-                    int recvBytes = clientSocket.Receive(recvBuff);
-                    string recvData = Encoding.UTF8.GetString(recvBuff, 0, recvBytes);
-                    Console.WriteLine($"from client : {recvData}");
-
-                    //send
-                    byte[] sendBuff = Encoding.UTF8.GetBytes("welcome to server!");
-                    clientSocket.Send(sendBuff);
-
-                    clientSocket.Shutdown(SocketShutdown.Both);
-                    clientSocket.Close();
-
-                }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
+            
         }
     }
 
