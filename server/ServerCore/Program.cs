@@ -8,35 +8,36 @@ namespace ServerCore
 
     class Program
     {
-        static volatile int count = 0;
-        static Lock _lock = new Lock();
+        //static string ThreadName; // 모든 쓰레드가 공유
+        static ThreadLocal<string> ThreadName = new ThreadLocal<string>(() => { return $"{Thread.CurrentThread.ManagedThreadId}"; });//ThreadName.Value가 null일 때 이부분이 실행되는 것
+
+        static void WhoAmI()
+        {
+            //ThreadName.Value = $"My name is {Thread.CurrentThread.ManagedThreadId}";
+            bool repeat = ThreadName.IsValueCreated;
+            if (repeat)
+            {
+                Console.WriteLine(ThreadName.Value+"repeat");
+            } else
+            {
+                Console.WriteLine(ThreadName.Value);
+            }
+            
+
+            
+        }
+
         static void Main(string[] args)
         {
-            Task t1 = new Task(delegate ()
-            {
-            for (int i = 0; i < 100000; i++)
-                {
-                    _lock.WriteLock();
-                    count++;
-                    _lock.WriteUnlock();
-                }
-            });
-            Task t2 = new Task(delegate ()
-            {
-                for (int i = 0; i < 100000; i++)
-                {
-                    _lock.WriteLock();
-                    count--;
-                    _lock.WriteUnlock();
-                }
-            });
+            ThreadPool.SetMinThreads(1, 1);
+            ThreadPool.SetMaxThreads(3, 3);
+            Parallel.Invoke(WhoAmI, WhoAmI, WhoAmI, WhoAmI, WhoAmI, WhoAmI);
 
-            t1.Start();
-            t2.Start();
-            Task.WaitAll(t1, t2);
 
-            Console.WriteLine(count);
+            ThreadName.Dispose();
         }
     }
 
 }
+
+//tls
