@@ -8,10 +8,11 @@ namespace ServerCore
 	{
 		Socket _socket;
 		int _disconnected = 0;
+        List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
         SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
         Queue<byte[]> _sendQueue = new Queue<byte[]>();
-		bool _pending = false;
+		
 
 		object _lock = new object();
 
@@ -33,7 +34,7 @@ namespace ServerCore
 			lock (_lock)
 			{
                 _sendQueue.Enqueue(sendBuffer);
-                if (_pending == false)
+                if (_pendingList.Count() == 0)
                     RegisterSend();
             }
         }
@@ -52,11 +53,15 @@ namespace ServerCore
 
 		void RegisterSend()
 		{
-			_pending = true;
-			byte[] buff = _sendQueue.Dequeue();
-			_sendArgs.SetBuffer(buff,0, buff.Length);
+            while (_sendQueue.Count > 0)
+			{
+                byte[] buff = _sendQueue.Dequeue();
+                _pendingList.Add(new ArraySegment<byte>(buff, 0, buff.Length));
+			}
+			_sendArgs.BufferList = _pendingList;
 
-			bool pending = _socket.SendAsync(_sendArgs);
+
+            bool pending = _socket.SendAsync(_sendArgs);
 			if (pending == false)
 				OnSendCompleted(null, _sendArgs);
 		}
@@ -69,10 +74,12 @@ namespace ServerCore
                 {
                     try
                     {
+						_sendArgs.BufferList = null;
+						_pendingList.Clear();
 						if (_sendQueue.Count > 0)
 							RegisterSend();
-						else
-							_pending = false;
+
+						Console.WriteLine($"Transferred Bytes : { _sendArgs.BytesTransferred}");
                     }
                     catch (Exception e)
                     {
@@ -120,3 +127,7 @@ namespace ServerCore
     }
 }
 
+// send 모아 보내기. 하지만 packet 모아보내기는 또 다름. 한 유저의 정보를 모두가 알아야 함. 이런것 들을 뭉쳐야 함.
+// 아주 짧은 시간동안 모두의 정보를 모은 packet들을 모아 보내는 것이 좋다.
+// 서버에서 할건지 콘텐츠 단에서 모아서 send한번 할건지 갈린다고 한다.
+// 엔진은 여기서 끝내고, zone에 있는 모든 것들을 모아 보내는 것이 좋다고 강사님은 생각하심.
