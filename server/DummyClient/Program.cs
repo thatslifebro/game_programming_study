@@ -32,8 +32,12 @@ namespace DummyClient
                     Console.WriteLine($"connect to {socket.RemoteEndPoint}");
 
                     //send
-                    byte[] sendBuff = Encoding.UTF8.GetBytes("hello this is client");
-                    int sendBytes = socket.Send(sendBuff);
+                    for(int i = 0; i < 5; i++)
+                    {
+                        byte[] sendBuff = Encoding.UTF8.GetBytes($"hello this is client {i}th");
+                        int sendBytes = socket.Send(sendBuff);
+                    }
+                    
 
                     //recv
                     byte[] recvBuff = new byte[1024];
