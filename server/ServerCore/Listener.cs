@@ -8,12 +8,12 @@ namespace ServerCore
 	{
 
 		Socket _listenSocket;
-		Action<Socket> _onAcceptHandler;
+		Func<Session> _sessionFactory;
 
-		public void init(Action<Socket> onAcceptHandler,IPEndPoint endPoint)
+		public void init(Func<Session> sessionFactory, IPEndPoint endPoint)
 		{
             _listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _onAcceptHandler += onAcceptHandler;
+			_sessionFactory += sessionFactory;
 
             _listenSocket.Bind(endPoint);
 
@@ -39,9 +39,9 @@ namespace ServerCore
 		{
 			if (args.SocketError == SocketError.Success)
 			{
-
-                _onAcceptHandler.Invoke(args.AcceptSocket);
-
+				Session session = _sessionFactory.Invoke();
+                session.Start(args.AcceptSocket);
+				session.OnConnected(args.AcceptSocket.RemoteEndPoint);
 
 			}
 			else
@@ -55,3 +55,5 @@ namespace ServerCore
 	}
 }
 
+//sessionFactory로 바꿈
+//엔진단과 컨텐츠단 분리 

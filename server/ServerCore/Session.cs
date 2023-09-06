@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
 namespace ServerCore
 {
-	class Session
+    abstract class Session
 	{
 		Socket _socket;
 		int _disconnected = 0;
@@ -15,6 +16,12 @@ namespace ServerCore
 		
 
 		object _lock = new object();
+
+		public abstract void OnConnected(EndPoint endPoint);
+		public abstract void OnRecv(ArraySegment<byte> buffer);
+		public abstract void OnSend(int numOfBytes);
+		public abstract void OnDisconnected(EndPoint endPoint);
+
 
         public void Start(Socket socket)
 		{
@@ -45,6 +52,7 @@ namespace ServerCore
 			{
 				return;
 			}
+			OnDisconnected(_socket.RemoteEndPoint);
 			_socket.Shutdown(SocketShutdown.Both);
 			_socket.Close();
 		}
@@ -79,7 +87,7 @@ namespace ServerCore
 						if (_sendQueue.Count > 0)
 							RegisterSend();
 
-						Console.WriteLine($"Transferred Bytes : { _sendArgs.BytesTransferred}");
+						OnSend(_sendArgs.BytesTransferred);
                     }
                     catch (Exception e)
                     {
@@ -108,9 +116,8 @@ namespace ServerCore
 			{
 				try
 				{
-					string recvData = Encoding.UTF8.GetString(args.Buffer, args.Offset, args.BytesTransferred);
-					Console.WriteLine($"[From client] : {recvData}");
-					RegisterRecv();
+                    OnRecv(new ArraySegment<byte>(args.Buffer, 0, args.Buffer.Length));
+                    RegisterRecv();
 				}catch(Exception e)
 				{
 					Console.WriteLine($"OnRecvCompleted failed : {e}");
@@ -127,7 +134,5 @@ namespace ServerCore
     }
 }
 
-// send 모아 보내기. 하지만 packet 모아보내기는 또 다름. 한 유저의 정보를 모두가 알아야 함. 이런것 들을 뭉쳐야 함.
-// 아주 짧은 시간동안 모두의 정보를 모은 packet들을 모아 보내는 것이 좋다.
-// 서버에서 할건지 콘텐츠 단에서 모아서 send한번 할건지 갈린다고 한다.
-// 엔진은 여기서 끝내고, zone에 있는 모든 것들을 모아 보내는 것이 좋다고 강사님은 생각하심.
+// engine과 content를 분리 하기 onconnected, onDisconnected, OnRecv, Onsend 로
+// 4가지 상황에 무엇을 할지를 분리했고 servercore파일에 GameSession에 정의하도록 해놨다.
