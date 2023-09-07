@@ -55,4 +55,4 @@ namespace ServerCore
 
 //데이터를 받을 때 buffer에 저장해 놓고, 의미가 잇을 만큼 충분한 데이터가 모이면
 //컨텐츠 단에서 사용할 것이고 아니라면 놔둔다.
-//buffer에 어디 까지 데이터를 모앗는지 _writePos, 어디까지 데이터를 사용햇는지 _readPos 로 표시.
+//buffer에 어디 까지 데이터를 모앗는지 _writePos, 어디까지 데이터를 사용햇는지 _readPos 로 표시

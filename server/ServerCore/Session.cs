@@ -15,7 +15,7 @@ namespace ServerCore
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
         SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
-        Queue<byte[]> _sendQueue = new Queue<byte[]>();
+        Queue<ArraySegment<byte>> _sendQueue = new Queue<ArraySegment<byte>>();
 		
 
 		object _lock = new object();
@@ -37,7 +37,7 @@ namespace ServerCore
             RegisterRecv();
 		}
 
-		public void Send(byte[] sendBuffer)
+		public void Send(ArraySegment<byte> sendBuffer)
 		{
 			//_socket.Send(sendBuffer);
 			lock (_lock)
@@ -65,8 +65,8 @@ namespace ServerCore
 		{
             while (_sendQueue.Count > 0)
 			{
-                byte[] buff = _sendQueue.Dequeue();
-                _pendingList.Add(new ArraySegment<byte>(buff, 0, buff.Length));
+                ArraySegment<byte> buff = _sendQueue.Dequeue();
+                _pendingList.Add(buff);
 			}
 			_sendArgs.BufferList = _pendingList;
 
@@ -162,5 +162,3 @@ namespace ServerCore
     }
 }
 
-//데이터를 받았을 때 buffer의 어디에 저장할지 정해주고 전송이 끝나면 그 데이터가 컨텐츠쪽에서 얼마나
-//사용햇는지 확인해야 한다.
