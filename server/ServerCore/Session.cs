@@ -5,6 +5,40 @@ using System.Text;
 
 namespace ServerCore
 {
+	public abstract class PacketSession : Session
+	{
+		public static readonly int HeaderSize = 2;
+		//override로 정의, sealed 로 여기의 것을 사용하ㅏ도록
+		//[size(2)][packetId(2)]...
+        public sealed override int OnRecv(ArraySegment<byte> buffer)
+		{
+			int processLen=0;
+			while (true)
+			{
+				//최소한 헤더사이즈 받을 수 있는지  
+				if (buffer.Count < HeaderSize) 
+				{
+					break;
+				}
+				ushort dataSize = BitConverter.ToUInt16(buffer.Array, buffer.Offset);
+				if(buffer.Count < dataSize) // packet이 다 안왔다.
+				{
+					break;
+				}
+
+				OnRecvPacket(new ArraySegment<byte>(buffer.Array,buffer.Offset,dataSize));
+
+				processLen += dataSize;
+
+				buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
+			}
+
+			return processLen;
+		}
+
+		public abstract void OnRecvPacket(ArraySegment<byte> buffer);
+    }
+
     public abstract class Session
 	{
 		Socket _socket;
