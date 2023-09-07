@@ -1,3 +1,9 @@
 *.dll
 *.pdb
 *.xml
+*.cache
+*.csproj
+*.json
+*.txt
+*.CopyComplete
+*.DS_Store

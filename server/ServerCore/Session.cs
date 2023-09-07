@@ -9,6 +9,9 @@ namespace ServerCore
 	{
 		Socket _socket;
 		int _disconnected = 0;
+
+		RecvBuffer _recvBuffer = new RecvBuffer(1024);
+
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
         SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
@@ -18,7 +21,7 @@ namespace ServerCore
 		object _lock = new object();
 
 		public abstract void OnConnected(EndPoint endPoint);
-		public abstract void OnRecv(ArraySegment<byte> buffer);
+		public abstract int OnRecv(ArraySegment<byte> buffer);
 		public abstract void OnSend(int numOfBytes);
 		public abstract void OnDisconnected(EndPoint endPoint);
 
@@ -27,8 +30,7 @@ namespace ServerCore
 		{
 			_socket = socket;
 
-            _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
-            _recvArgs.SetBuffer(new byte[1024], 0, 1024);
+			_recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
 
             _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
 
@@ -105,6 +107,10 @@ namespace ServerCore
 
         void RegisterRecv()
 		{
+			_recvBuffer.Clean();
+			ArraySegment<byte> segment = _recvBuffer.WriteSegment;
+			_recvArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+
 			bool pending = _socket.ReceiveAsync(_recvArgs);
 			if (pending == false)
 				OnRecvCompleted(null, _recvArgs);
@@ -116,7 +122,29 @@ namespace ServerCore
 			{
 				try
 				{
-                    OnRecv(new ArraySegment<byte>(args.Buffer, 0, args.Buffer.Length));
+					//writePos 이동
+					if (_recvBuffer.OnWrite(args.BytesTransferred) == false)
+					{
+						Disconnect();
+						return;
+					}
+
+					//컨텐츠쪽으로 데이터 넘겨주고 얼마나 받았는지 알아야 함.
+
+                    int processLen = OnRecv(_recvBuffer.ReadSegment);
+					if (processLen < 0 || processLen>_recvBuffer.DataSize)
+					{
+						Disconnect();
+						return;
+					}
+
+					//_readPos 이동
+					if (_recvBuffer.OnRead(processLen) == false)
+					{
+						Disconnect();
+						return;
+					}
+
                     RegisterRecv();
 				}catch(Exception e)
 				{
@@ -134,5 +162,5 @@ namespace ServerCore
     }
 }
 
-// engine과 content를 분리 하기 onconnected, onDisconnected, OnRecv, Onsend 로
-// 4가지 상황에 무엇을 할지를 분리했고 servercore파일에 GameSession에 정의하도록 해놨다.
+//데이터를 받았을 때 buffer의 어디에 저장할지 정해주고 전송이 끝나면 그 데이터가 컨텐츠쪽에서 얼마나
+//사용햇는지 확인해야 한다.
