@@ -19,6 +19,7 @@ namespace DummyClient
     class PlayerInfoReq : Packet
     {
         public long playerId;
+        public string name;
 
         public PlayerInfoReq()
         {
@@ -27,18 +28,35 @@ namespace DummyClient
 
         public override ArraySegment<byte> Serialize()
         {
-            ArraySegment<byte> s = SendBufferHelper.Open(4096);
+            ArraySegment<byte> segment = SendBufferHelper.Open(4096);
 
             ushort count = 0;
             bool success = true;
-            //success &= BitConverter.TryWriteBytes(new Span<byte>(s.Array, s.Offset, s.Count), packet.size);
-            count += 2;
-            success &= BitConverter.TryWriteBytes(new Span<byte>(s.Array, s.Offset + count, s.Count - count), this.packetId);
-            count += 2;
-            success &= BitConverter.TryWriteBytes(new Span<byte>(s.Array, s.Offset + count, s.Count - count), this.playerId);
-            count += 8;
 
-            success &= BitConverter.TryWriteBytes(new Span<byte>(s.Array, s.Offset, s.Count), count);
+            Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
+
+            //success &= BitConverter.TryWriteBytes(new Span<byte>(s.Array, s.Offset, s.Count), packet.size);
+            count += sizeof(ushort);
+            success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.packetId);
+            count += sizeof(ushort);
+            success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), this.playerId);
+            count += sizeof(long);
+
+
+            //string
+            //ushort nameLen = (ushort)Encoding.Unicode.GetByteCount(this.name);
+            //success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), nameLen);
+            //count += sizeof(ushort);
+            //Array.Copy(Encoding.Unicode.GetBytes(this.name), 0, segment.Array, count,nameLen);
+            // copy 보다 바로 넣는것이 resource덜 씀.
+            ushort nameLen = (ushort)Encoding.Unicode.GetBytes(this.name, 0, this.name.Length, segment.Array, segment.Offset+count+sizeof(ushort));
+            success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), nameLen);
+            count += sizeof(ushort);
+            count += nameLen;
+
+
+
+            success &= BitConverter.TryWriteBytes(s, count);
 
             if (success == false)
                 return null;
@@ -46,18 +64,26 @@ namespace DummyClient
             return SendBufferHelper.Close(count);
         }
 
-        public override void Deserialize(ArraySegment<byte> s)
+        public override void Deserialize(ArraySegment<byte> segment)
         {
             ushort count = 0;
 
-            //ushort size = BitConverter.ToUInt16(s.Array, s.Offset);
-            count += 2;
-            //ushort id = BitConverter.ToUInt16(s.Array, s.Offset + count);
-            count += 2;
+            ReadOnlySpan<byte> s = new ReadOnlySpan<byte>(segment.Array, segment.Offset, segment.Count);
 
-            this.playerId = BitConverter.ToInt64(new ReadOnlySpan<byte>(s.Array, s.Offset + count, s.Count - count));
-            count += 8;
-            
+            //ushort size = BitConverter.ToUInt16(s.Array, s.Offset);
+            count += sizeof(ushort);
+            //ushort id = BitConverter.ToUInt16(s.Array, s.Offset + count);
+            count += sizeof(ushort);
+
+            this.playerId = BitConverter.ToInt64(s.Slice(count,s.Length-count));
+            count += sizeof(long);
+
+            ushort nameLen = BitConverter.ToUInt16(s.Slice(count, s.Length - count));
+            count += sizeof(ushort);
+            this.name = Encoding.Unicode.GetString(s.Slice(count,nameLen));
+            count += nameLen;
+
+
         }
     }
 
@@ -71,7 +97,7 @@ namespace DummyClient
     {
         public override void OnConnected(EndPoint endPoint)
         {
-            PlayerInfoReq packet = new PlayerInfoReq() { playerId = 1001 };
+            PlayerInfoReq packet = new PlayerInfoReq() { playerId = 1001, name = "김성연" };
             ArraySegment<byte> s = packet.Serialize();
             if (s != null)
                 Send(s);
@@ -98,3 +124,5 @@ namespace DummyClient
     }
 }
 
+//string은 크기가 가변이기 때문에 기존과 다르게 처리해야한다.
+// 2byte로 string크기를 먼저 보내고 그뒤에 데이터 보내면 좋을듯.
