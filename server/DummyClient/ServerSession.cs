@@ -12,14 +12,14 @@ namespace DummyClient
     {
         public override void OnConnected(EndPoint endPoint)
         {
-            PlayerInfoReq packet = new PlayerInfoReq() { playerId = 1001, name = "김성연"};
-            var skill = new PlayerInfoReq.Skill() { id = 1, level = 10, duration = 27.3f };
-            skill.attrs.Add(new PlayerInfoReq.Skill.Attr() { attrNum = 99 });
+            C_PlayerInfoReq packet = new C_PlayerInfoReq() { playerId = 1001, name = "김성연"};
+            var skill = new C_PlayerInfoReq.Skill() { id = 1, level = 10, duration = 27.3f };
+            skill.attrs.Add(new C_PlayerInfoReq.Skill.Attr() { attrNum = 99 });
             packet.skills.Add(skill);
 
-            packet.skills.Add(new PlayerInfoReq.Skill() { id = 2, level = 7, duration = 13.2f });
-            packet.skills.Add(new PlayerInfoReq.Skill() { id = 3, level = 8, duration = 17.1f });
-            packet.skills.Add(new PlayerInfoReq.Skill() { id = 4, level = 13, duration = 22.1f });
+            packet.skills.Add(new C_PlayerInfoReq.Skill() { id = 2, level = 7, duration = 13.2f });
+            packet.skills.Add(new C_PlayerInfoReq.Skill() { id = 3, level = 8, duration = 17.1f });
+            packet.skills.Add(new C_PlayerInfoReq.Skill() { id = 4, level = 13, duration = 22.1f });
 
             ArraySegment<byte> s = packet.Serialize();
             if (s != null)

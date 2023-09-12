@@ -3,8 +3,8 @@ using ServerCore;
 using System.Net;
 public enum PacketId
 {
-    PlayerInfoReq = 1,
-    Test = 2,
+    C_PlayerInfoReq = 1,
+    S_Test = 2,
     
 }
 
@@ -16,7 +16,7 @@ interface IPacket
 }
 
 
-class PlayerInfoReq : IPacket
+class C_PlayerInfoReq : IPacket
 {
     public byte testByte;
 	public long playerId;
@@ -87,7 +87,7 @@ class PlayerInfoReq : IPacket
 	}
 	public List<Skill> skills = new List<Skill>();
 
-    public ushort Protocol { get { return (ushort)PacketId.PlayerInfoReq; } }
+    public ushort Protocol { get { return (ushort)PacketId.C_PlayerInfoReq; } }
 
     public ArraySegment<byte> Serialize()
     {
@@ -98,7 +98,7 @@ class PlayerInfoReq : IPacket
 
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.PlayerInfoReq);
+        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.C_PlayerInfoReq);
         count += sizeof(ushort);
         segment.Array[segment.Offset + count] = (byte)this.testByte;
 		count += sizeof(byte);
@@ -150,7 +150,7 @@ class PlayerInfoReq : IPacket
 }
 
 
-class Test : IPacket
+class S_Test : IPacket
 {
     public long testLong;
 	public string name;
@@ -185,7 +185,7 @@ class Test : IPacket
 	}
 	public List<Skill> skills = new List<Skill>();
 
-    public ushort Protocol { get { return (ushort)PacketId.Test; } }
+    public ushort Protocol { get { return (ushort)PacketId.S_Test; } }
 
     public ArraySegment<byte> Serialize()
     {
@@ -196,7 +196,7 @@ class Test : IPacket
 
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.Test);
+        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.S_Test);
         count += sizeof(ushort);
         success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.testLong);
 		count += sizeof(long);
