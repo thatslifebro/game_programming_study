@@ -3,6 +3,26 @@ namespace PacketGenerator
 {
 	class PacketFormat
 	{
+        //0: enum 1 : packetformat
+        public static string fileFormat =
+@"
+using System.Text;
+using ServerCore;
+using System.Net;
+public enum PacketeId
+{{
+    {0}
+}}
+
+{1}
+
+";
+        //0: packetName 1: packetId
+        public static string packetEnumFormat =
+@"{0} = {1},
+    ";
+
+
         //0 : packet이름 1: 멤버변수 2: 멤버변수 serialize  3: 멤버변수 desrialize
 		public static string packetFormat =
 @"
@@ -111,8 +131,16 @@ for (int i=0;i < {1}Len;i++)
     {1}.Read(s, ref count);
     {1}s.Add({1});
 }}";
+        // 0 : byteName 1: format
+        public static string deserializeByteFormat =
+@"this.{0} = ({1})segment.Array[segment.Offset + count];
+count += sizeof({1});";
+        //0:byteName 1: format
+        public static string serializeByteFormat =
+@"segment.Array[segment.Offset + count] = (byte)this.{0};
+count += sizeof({1});";
     }
 
-        
+    
 }
 
