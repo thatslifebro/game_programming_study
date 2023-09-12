@@ -1,26 +1,32 @@
-
 using System.Text;
 using ServerCore;
 using System.Net;
-public enum PacketeId
+public enum PacketId
 {
     PlayerInfoReq = 1,
     Test = 2,
     
 }
 
+interface IPacket
+{
+	ushort Protocol { get; }
+	void Deserialize(ArraySegment<byte> segment);
+	ArraySegment<byte> Serialize();
+}
 
-class PlayerInfoReq
+
+class PlayerInfoReq : IPacket
 {
     public byte testByte;
 	public long playerId;
 	public string name;
-	public struct Skill
+	public class Skill
 	{
 	    public int id;
 		public short level;
 		public float duration;
-		public struct Attr
+		public class Attr
 		{
 		    public int attrNum;
 		
@@ -81,6 +87,8 @@ class PlayerInfoReq
 	}
 	public List<Skill> skills = new List<Skill>();
 
+    public ushort Protocol { get { return (ushort)PacketId.PlayerInfoReq; } }
+
     public ArraySegment<byte> Serialize()
     {
         ArraySegment<byte> segment = SendBufferHelper.Open(4096);
@@ -90,9 +98,9 @@ class PlayerInfoReq
 
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketeId.PlayerInfoReq);
+        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.PlayerInfoReq);
         count += sizeof(ushort);
-        segment.Array[segment.Offest + count] = (byte)this.testByte;
+        segment.Array[segment.Offset + count] = (byte)this.testByte;
 		count += sizeof(byte);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.playerId);
 		count += sizeof(long);
@@ -142,11 +150,11 @@ class PlayerInfoReq
 }
 
 
-class Test
+class Test : IPacket
 {
     public long testLong;
 	public string name;
-	public struct Skill
+	public class Skill
 	{
 	    public int id;
 		public short level;
@@ -177,6 +185,8 @@ class Test
 	}
 	public List<Skill> skills = new List<Skill>();
 
+    public ushort Protocol { get { return (ushort)PacketId.Test; } }
+
     public ArraySegment<byte> Serialize()
     {
         ArraySegment<byte> segment = SendBufferHelper.Open(4096);
@@ -186,7 +196,7 @@ class Test
 
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketeId.Test);
+        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.Test);
         count += sizeof(ushort);
         success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.testLong);
 		count += sizeof(long);

@@ -5,13 +5,19 @@ namespace PacketGenerator
 	{
         //0: enum 1 : packetformat
         public static string fileFormat =
-@"
-using System.Text;
+@"using System.Text;
 using ServerCore;
 using System.Net;
-public enum PacketeId
+public enum PacketId
 {{
     {0}
+}}
+
+interface IPacket
+{{
+	ushort Protocol {{ get; }}
+	void Deserialize(ArraySegment<byte> segment);
+	ArraySegment<byte> Serialize();
 }}
 
 {1}
@@ -26,9 +32,11 @@ public enum PacketeId
         //0 : packet이름 1: 멤버변수 2: 멤버변수 serialize  3: 멤버변수 desrialize
 		public static string packetFormat =
 @"
-class {0}
+class {0} : IPacket
 {{
     {1}
+
+    public ushort Protocol {{ get {{ return (ushort)PacketId.{0}; }} }}
 
     public ArraySegment<byte> Serialize()
     {{
@@ -39,7 +47,7 @@ class {0}
 
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketeId.{0});
+        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.{0});
         count += sizeof(ushort);
         {2}
         success &= BitConverter.TryWriteBytes(s, count);
@@ -69,7 +77,7 @@ class {0}
 
         //0: 리스트이름 대문자 1: 리스트이름 소문자 2: member 변수 3: 멤버변수 serialize  4: 멤버변수 desrialize
         public static string memberListFormat =
-@"public struct {0}
+@"public class {0}
 {{
     {2}
 

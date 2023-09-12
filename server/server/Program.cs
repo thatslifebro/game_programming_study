@@ -6,18 +6,21 @@ using System.Net;
 using System.Text;
 using static System.Collections.Specialized.BitVector32;
 using ServerCore;
-using server;
+using Server;
 
 namespace Server
 {
     
-
     class Program
     {
+        
+
         static Listener _listener = new Listener();
 
         static void Main(string[] args)
         {
+            PacketManager.Instance.Register();
+
             //DNS
             string host = Dns.GetHostName();
             IPHostEntry ipHost = Dns.GetHostEntry(host);
