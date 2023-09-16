@@ -10,19 +10,23 @@ namespace ServerCore
 		Socket _listenSocket;
 		Func<Session> _sessionFactory;
 
-		public void init(Func<Session> sessionFactory, IPEndPoint endPoint)
+		public void init(Func<Session> sessionFactory, IPEndPoint endPoint, int register = 10, int backlog = 100)
 		{
             _listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 			_sessionFactory += sessionFactory;
 
             _listenSocket.Bind(endPoint);
 
-            _listenSocket.Listen(10);
+            _listenSocket.Listen(backlog);
 
-			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-			args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
+			for(int i = 0; i < register; i++)
+			{
+                SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+                args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
+                RegisterAccept(args);
+            }
+
 			
-			RegisterAccept(args);
         }
 
 		void RegisterAccept(SocketAsyncEventArgs args)

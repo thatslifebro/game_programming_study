@@ -1,4 +1,5 @@
 ﻿using System;
+using server;
 using Server;
 using ServerCore;
 
@@ -16,7 +17,10 @@ class PacketHandler
 		}
 		else
 		{
-			clientSession.Room.Broadcast(clientSession, chatPacket.chat);
+			GameRoom room = clientSession.Room;
+			room.Push(
+				() => room.Broadcast(clientSession, chatPacket.chat)
+				);
 		}
 
     }

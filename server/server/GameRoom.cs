@@ -1,13 +1,19 @@
 ﻿using System;
 using Server;
+using ServerCore;
 
 namespace server
 {
-	class GameRoom
+	class GameRoom : IJobQueue
 	{
 		List<ClientSession> _sessions = new List<ClientSession>();
-
 		object _lock = new object();
+		JobQueue _jobQueue = new JobQueue();
+
+		public void Push(Action job)
+		{
+			_jobQueue.Push(job);
+		}
 
 		public void Broadcast(ClientSession session, string message)
 		{
@@ -17,36 +23,21 @@ namespace server
 
 			ArraySegment<byte> segment = packet.Serialize();
 
-			lock (_lock)
+			foreach (ClientSession sess in _sessions)
 			{
-				foreach (ClientSession sess in _sessions)
-				{
-					sess.Send(segment);
-				}
+				sess.Send(segment);
 			}
-			//recieve받자마자 broadcasting했는데 하나받고 모든사람에게 다시 전달하면 lock때문에 한번에 한쓰레드밖에 일을 못해서
-			//문제가 생긴다.
 		}
 
 		public void Enter(ClientSession session)
 		{
-			lock (_lock)
-			{
-                _sessions.Add(session);
-                session.Room = this;
-            }
-			
+            _sessions.Add(session);
+            session.Room = this;
 		}
 		public void Leave(ClientSession session)
 		{
-            lock (_lock)
-            {
-                _sessions.Remove(session);
-            }
-            
+            _sessions.Remove(session);
 		}
-
-		
 	}
 }
 
