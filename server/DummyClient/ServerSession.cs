@@ -8,22 +8,11 @@ namespace DummyClient
 {
 
 
-    class ServerSession : Session
+    class ServerSession : PacketSession
     {
         public override void OnConnected(EndPoint endPoint)
         {
-            C_PlayerInfoReq packet = new C_PlayerInfoReq() { playerId = 1001, name = "김성연"};
-            var skill = new C_PlayerInfoReq.Skill() { id = 1, level = 10, duration = 27.3f };
-            skill.attrs.Add(new C_PlayerInfoReq.Skill.Attr() { attrNum = 99 });
-            packet.skills.Add(skill);
 
-            packet.skills.Add(new C_PlayerInfoReq.Skill() { id = 2, level = 7, duration = 13.2f });
-            packet.skills.Add(new C_PlayerInfoReq.Skill() { id = 3, level = 8, duration = 17.1f });
-            packet.skills.Add(new C_PlayerInfoReq.Skill() { id = 4, level = 13, duration = 22.1f });
-
-            ArraySegment<byte> s = packet.Serialize();
-            if (s != null)
-                Send(s);
         }
 
 
@@ -33,16 +22,14 @@ namespace DummyClient
         }
 
 
-        public override int OnRecv(ArraySegment<byte> buffer)
+        public override void OnRecvPacket(ArraySegment<byte> buffer)
         {
-            string recvData = Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count);
-            Console.WriteLine($"[From Server] : {recvData}");
-            return buffer.Count;
+            PacketManager.Instance.OnRecvPacket(this,buffer);
         }
 
         public override void OnSend(int numOfBytes)
         {
-            Console.WriteLine($"Transferred Bytes : {numOfBytes}");
+            //Console.WriteLine($"Transferred Bytes : {numOfBytes}");
         }
     }
 }
