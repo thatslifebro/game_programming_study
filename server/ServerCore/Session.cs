@@ -13,6 +13,7 @@ namespace ServerCore
         public sealed override int OnRecv(ArraySegment<byte> buffer)
 		{
 			int processLen=0;
+			int packetCount = 0;
 			while (true)
 			{
 				//최소한 헤더사이즈 받을 수 있는지  
@@ -27,10 +28,16 @@ namespace ServerCore
 				}
 
 				OnRecvPacket(new ArraySegment<byte>(buffer.Array,buffer.Offset,dataSize));
+				packetCount++;
 
 				processLen += dataSize;
 
 				buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
+			}
+
+			if (packetCount > 1)
+			{
+				Console.WriteLine($"packet모아보내기 : {packetCount}");
 			}
 
 			return processLen;
@@ -44,7 +51,7 @@ namespace ServerCore
 		Socket _socket;
 		int _disconnected = 0;
 
-		RecvBuffer _recvBuffer = new RecvBuffer(1024);
+		RecvBuffer _recvBuffer = new RecvBuffer(65535);
 
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
@@ -79,7 +86,24 @@ namespace ServerCore
             RegisterRecv();
 		}
 
-		public void Send(ArraySegment<byte> sendBuffer)
+        public void Send(List<ArraySegment<byte>> sendBufferList)
+        {
+            if (sendBufferList.Count == 0)
+            {
+                return;
+            }
+
+            //_socket.Send(sendBuffer);
+            lock (_lock)
+            {
+                foreach (ArraySegment<byte> sendBuffer in sendBufferList)
+                    _sendQueue.Enqueue(sendBuffer);
+                if (_pendingList.Count() == 0)
+                    RegisterSend();
+            }
+        }
+
+        public void Send(ArraySegment<byte> sendBuffer)
 		{
 			//_socket.Send(sendBuffer);
 			lock (_lock)
@@ -90,7 +114,9 @@ namespace ServerCore
             }
         }
 
-		public void Disconnect()
+        
+
+        public void Disconnect()
 		{
 			if(Interlocked.Exchange(ref _disconnected, 1) == 1)
 			{

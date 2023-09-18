@@ -8,6 +8,8 @@ namespace server
 	{
 		List<ClientSession> _sessions = new List<ClientSession>();
 		object _lock = new object();
+		List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
+
 		JobQueue _jobQueue = new JobQueue();
 
 		public void Push(Action job)
@@ -23,13 +25,25 @@ namespace server
 
 			ArraySegment<byte> segment = packet.Serialize();
 
-			foreach (ClientSession sess in _sessions)
-			{
-				sess.Send(segment);
-			}
+			_pendingList.Add(segment);
+
+			//foreach (ClientSession sess in _sessions)
+			//{
+			//	sess.Send(segment);
+			//}
 		}
 
-		public void Enter(ClientSession session)
+		public void Flush()
+		{
+			foreach (ClientSession sess in _sessions)
+			{
+				sess.Send(_pendingList);
+			}
+			Console.WriteLine($"Flushed {_pendingList.Count} items");
+			_pendingList.Clear();
+		}
+
+        public void Enter(ClientSession session)
 		{
             _sessions.Add(session);
             session.Room = this;
