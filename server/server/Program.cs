@@ -18,6 +18,12 @@ namespace Server
 
         static Listener _listener = new Listener();
 
+        static void FlushRoom()
+        {
+            Room.Push(() => Room.Flush());
+            JobTimer.Instance.Push(FlushRoom, 250);
+        }
+
         static void Main(string[] args)
         {
             
@@ -32,10 +38,12 @@ namespace Server
             _listener.init(() => { return SessionManager.Instance.Generate(); }, endPoint);
             Console.WriteLine("Listenning...");
 
+            JobTimer.Instance.Push(FlushRoom);
+            
             while (true)
             {
-                Room.Push(() => Room.Flush());
-                Thread.Sleep(250);
+                JobTimer.Instance.Flush();
+                
             }
 
         }
