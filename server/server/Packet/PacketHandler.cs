@@ -37,7 +37,7 @@ class PacketHandler
                 () => room.Move(clientSession, movePacket)
                 );
         }
-
+        
     }
 
 }
