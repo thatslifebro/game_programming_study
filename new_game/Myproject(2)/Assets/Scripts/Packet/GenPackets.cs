@@ -2,6 +2,7 @@ using System.Text;
 using ServerCore;
 using System.Net;
 using System;
+using System.Collections.Generic;
 
 public enum PacketId
 {

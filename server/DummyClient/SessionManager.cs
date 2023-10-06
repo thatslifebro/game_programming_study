@@ -10,18 +10,22 @@ namespace DummyClient
 
 		object _lock = new object();
 
+		Random _rand = new Random();
+
 		public void SendForEach()
 		{
 			lock (_lock)
 			{
 				foreach(ServerSession session in _sessions)
 				{
-					C_Chat chatPacket = new C_Chat();
-					chatPacket.chat = "hello, server!";
+					C_Move movePacket = new C_Move();
+					movePacket.posX = _rand.Next(-50,50);
+					movePacket.posY = 0;
+                    movePacket.posZ = _rand.Next(-50, 50);
 
-					ArraySegment<byte> segment = chatPacket.Serialize();
+                    ArraySegment<byte> segment = movePacket.Serialize();
 
-					session.Send(segment);
+					session.Send(movePacket.Serialize());
 				}
 			}
 		}

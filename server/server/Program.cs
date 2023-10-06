@@ -26,13 +26,15 @@ namespace Server
 
         static void Main(string[] args)
         {
-            
+
 
             //DNS
-            string host = Dns.GetHostName();
-            IPHostEntry ipHost = Dns.GetHostEntry(host);
-            IPAddress ipAddr = ipHost.AddressList[0];
-            IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
+            //string host = Dns.GetHostName();
+            //IPHostEntry ipHost = Dns.GetHostEntry(host);
+            //IPAddress ipAddr = ipHost.AddressList[0];
+            //IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
+            IPAddress ipAddr = IPAddress.Parse("127.0.0.1");
+            IPEndPoint endPoint = new IPEndPoint(ipAddr, 8888);
 
 
             _listener.init(() => { return SessionManager.Instance.Generate(); }, endPoint);
