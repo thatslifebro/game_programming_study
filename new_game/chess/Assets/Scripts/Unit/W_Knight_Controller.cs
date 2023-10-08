@@ -4,14 +4,12 @@ using UnityEngine;
 
 public class W_Knight_Controller : Base_Controller
 {
-    bool First = true;
     List<Vector2> togo = new List<Vector2>();
     Vector2 dest = new Vector2();
 
     public override void FirstFalse()
     {
         First = false;
-        Debug.Log($"First : {First}");
     }
     public override bool AttackKing(Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
     {

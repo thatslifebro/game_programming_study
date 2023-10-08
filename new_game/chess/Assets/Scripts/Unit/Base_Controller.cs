@@ -6,6 +6,8 @@ abstract public class Base_Controller : MonoBehaviour
 {
     public  bool AmIWhite;
     public bool IsKing;
+    public bool IsRook;
+    public bool First;
 
     public abstract void FirstFalse();
     public abstract void ShowPath(Vector2 chosenPosition, Dictionary<Vector2, GameObject> UnitMap, Dictionary<Vector2, GameObject> PointerMap);
@@ -24,7 +26,9 @@ abstract public class Base_Controller : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        IsKing = false;
+        IsRook = false;
+        First = true;
     }
 
     // Update is called once per frame

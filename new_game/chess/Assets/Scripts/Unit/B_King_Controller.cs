@@ -7,7 +7,6 @@ public class B_King_Controller : Base_Controller
 {
     List<Vector2> togo = new List<Vector2>();
     Vector2 dest = new Vector2();
-    bool First = true;
     public override void FirstFalse()
     {
         First = false;
@@ -37,9 +36,88 @@ public class B_King_Controller : Base_Controller
         //castling
         if (First)
         {
+            bool left = true;
+            bool right = true;
+            int i = 1;
+            //비었는지 
+            while (chosenPosition.x-i>-4)
+            {
+                left = left && !UnitMap.TryGetValue(new Vector2(chosenPosition.x - i, chosenPosition.y), out temp);
+                i++;
+            }
+            i = 1;
+            while (chosenPosition.x + i < 3)
+            {
+                right = right && !UnitMap.TryGetValue(new Vector2(chosenPosition.x + i, chosenPosition.y), out temp);
+                i++;
+            }
 
+            // 공격받는지
+            Vector2 target;
+            if (left)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    target = new Vector2(chosenPosition.x - j, chosenPosition.y);
+                    for (i = 0; i < 64; i++)
+                    {
+                        if (UnitMap.TryGetValue(new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4), out temp))
+                        {
+                            if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
+                            {
+                                left = left || temp.GetComponent<Base_Controller>().AttackKing(target, UnitMap);
+                            }
+                        }
+                    }
+                }
+                
+            }
+
+            if (right)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    target = new Vector2(chosenPosition.x + j, chosenPosition.y);
+                    for (i = 0; i < 64; i++)
+                    {
+                        if (UnitMap.TryGetValue(new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4), out temp))
+                        {
+                            if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
+                            {
+                                right = right || temp.GetComponent<Base_Controller>().AttackKing(target, UnitMap);
+                            }
+                        }
+                    }
+                }
+
+            }
+
+
+            //Pointer 변경
+            if (left && UnitMap.TryGetValue(new Vector2(-4,chosenPosition.y), out temp))
+            {
+                if(temp.GetComponent<Base_Controller>().IsRook && temp.GetComponent<Base_Controller>().First)
+                {
+                    if (PointerMap.TryGetValue(new Vector2(-4, chosenPosition.y), out temp))
+                    {
+                        temp.SetActive(true);
+                    }
+                }
+            }
+
+            if(right && UnitMap.TryGetValue(new Vector2(3, chosenPosition.y), out temp))
+            {
+                if (temp.GetComponent<Base_Controller>().IsRook && temp.GetComponent<Base_Controller>().First)
+                {
+                    if (PointerMap.TryGetValue(new Vector2(3, chosenPosition.y), out temp))
+                    {
+                        temp.SetActive(true);
+                    }
+                }
+            }
         }
 
+        //moving
         foreach (Vector2 v in togo)
         {
             dest.x = chosenPosition.x+v.x;
@@ -69,6 +147,15 @@ public class B_King_Controller : Base_Controller
     {
 
         GameObject temp;
+        //castling
+        if (PointerMap.TryGetValue(new Vector2(-4, chosenPosition.y), out temp))
+        {
+            temp.SetActive(false);
+        }
+        if (PointerMap.TryGetValue(new Vector2(3, chosenPosition.y), out temp))
+        {
+            temp.SetActive(false);
+        }
 
         foreach (Vector2 v in togo)
         {
@@ -80,7 +167,9 @@ public class B_King_Controller : Base_Controller
     }
     void Start()
     {
+        First = true;
         IsKing = true;
+        IsRook = false;
         AmIWhite = false;
         togo.Add(new Vector2(0, 1));
         togo.Add(new Vector2(0, -1));

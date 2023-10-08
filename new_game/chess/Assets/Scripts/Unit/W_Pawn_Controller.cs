@@ -7,7 +7,6 @@ public class W_Pawn_Controller : Base_Controller
 {
 
     int swwv;
-    bool First = true;
     List<Vector2> togo = new List<Vector2>();
     Vector2 dest = new Vector2();
 
@@ -84,7 +83,9 @@ public class W_Pawn_Controller : Base_Controller
     // Start is called before the first frame update
     void Start()
     {
+        First = true;
         IsKing = false;
+        IsRook = false;
         swwv = GameObject.Find("UnitController").GetComponent<UnitController>().SWWV;
         AmIWhite = true;
         if (swwv == 1)

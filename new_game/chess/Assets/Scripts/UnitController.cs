@@ -62,14 +62,48 @@ public class UnitController : MonoBehaviour
             bool clickedUnitOrNot = UnitMap.TryGetValue(clickPosition, out unit);
             PointerMap.TryGetValue(clickPosition, out pointer);
 
-            
+            //상대방꺼 누르면
             if(clickedUnitOrNot && !choosing && unit.GetComponent<Base_Controller>().AmIWhite != TurnIsWhite)
             {
                 return;
             }
+            //캐슬링
+            if (choosing&&pointer.activeSelf && clickedUnitOrNot)
+            {
+                chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
+                chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition, UnitMap, PointerMap);
+                if (chosenUnit.GetComponent<Base_Controller>().IsKing && unit.GetComponent<Base_Controller>().IsRook)
+                {
+                    if (clickPosition.x == -4)
+                    {
+                        UnitMap.Add(new Vector2(chosenUnitPosition.x - 2, chosenUnitPosition.y), chosenUnit);
+                        UnitMap.Remove(chosenUnitPosition);
+                        UnitMap.Add(new Vector2(chosenUnitPosition.x - 1, chosenUnitPosition.y), unit);
+                        UnitMap.Remove(clickPosition);
+                        chosenUnit.transform.position = new Vector2(chosenUnitPosition.x - 2, chosenUnitPosition.y) * interval + offset;
+                        unit.transform.position = new Vector2(chosenUnitPosition.x - 1, chosenUnitPosition.y) * interval + offset;
+                    }
+                    else if (clickPosition.x == 3)
+                    {
+                        UnitMap.Add(new Vector2(chosenUnitPosition.x + 2, chosenUnitPosition.y), chosenUnit);
+                        UnitMap.Remove(chosenUnitPosition);
+                        UnitMap.Add(new Vector2(chosenUnitPosition.x + 1, chosenUnitPosition.y), unit);
+                        UnitMap.Remove(clickPosition);
+                        chosenUnit.transform.position = new Vector2(chosenUnitPosition.x + 2, chosenUnitPosition.y) * interval + offset;
+                        unit.transform.position = new Vector2(chosenUnitPosition.x + 1, chosenUnitPosition.y) * interval + offset;
+                    }
+                    chosenUnit.GetComponent<Base_Controller>().FirstFalse();
+                    unit.GetComponent<Base_Controller>().FirstFalse();
+                    TurnIsWhite = !TurnIsWhite;
+                    choosing = false;
+                    chosenUnit = null;
+                }
+                
+
+            }
 
             // 고르기 
-            if (clickedUnitOrNot && !choosing)
+            else if (clickedUnitOrNot && !choosing)
             {
                 
                 choosing = true;

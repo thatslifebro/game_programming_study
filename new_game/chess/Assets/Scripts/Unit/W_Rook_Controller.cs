@@ -6,7 +6,6 @@ public class W_Rook_Controller : Base_Controller
 {
     List<Vector2> togo = new List<Vector2>();
     Vector2 dest = new Vector2();
-    bool First = true;
     public override void FirstFalse()
     {
         First = false;
@@ -92,7 +91,9 @@ public class W_Rook_Controller : Base_Controller
     }
     void Start()
     {
+        First = true;
         IsKing = false;
+        IsRook = true;
         AmIWhite = true;
         togo.Add(new Vector2(0, 1));
         togo.Add(new Vector2(0, -1));
