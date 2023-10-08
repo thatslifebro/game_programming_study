@@ -2,6 +2,7 @@ using System.Text;
 using ServerCore;
 using System.Net;
 using System;
+using System.Collections.Generic;
 
 public enum PacketId
 {
@@ -160,15 +161,21 @@ public class S_PlayerList : IPacket
     public class Player
 	{
 	    public bool isSelf;
+		public bool isMove;
 		public int playerId;
 		public float posX;
 		public float posY;
 		public float posZ;
+		public float dirX;
+		public float dirY;
+		public float dirZ;
 	
 	    public bool Write(Span<byte> s,ref ushort count)
 	    {
 	        bool success = true;
 	        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.isSelf);
+			count += sizeof(bool);
+			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.isMove);
 			count += sizeof(bool);
 			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.playerId);
 			count += sizeof(int);
@@ -178,12 +185,20 @@ public class S_PlayerList : IPacket
 			count += sizeof(float);
 			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posZ);
 			count += sizeof(float);
+			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirX);
+			count += sizeof(float);
+			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirY);
+			count += sizeof(float);
+			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirZ);
+			count += sizeof(float);
 	        return success;
 	    }
 	
 	    public void Read(ReadOnlySpan<byte>s,ref ushort count)
 	    {
 	        this.isSelf = BitConverter.ToBoolean(s.Slice(count,s.Length-count));
+			count += sizeof(bool);
+			this.isMove = BitConverter.ToBoolean(s.Slice(count,s.Length-count));
 			count += sizeof(bool);
 			this.playerId = BitConverter.ToInt32(s.Slice(count,s.Length-count));
 			count += sizeof(int);
@@ -192,6 +207,12 @@ public class S_PlayerList : IPacket
 			this.posY = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 			count += sizeof(float);
 			this.posZ = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+			count += sizeof(float);
+			this.dirX = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+			count += sizeof(float);
+			this.dirY = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+			count += sizeof(float);
+			this.dirZ = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 			count += sizeof(float);
 	    }
 	
@@ -247,9 +268,13 @@ public class S_PlayerList : IPacket
 
 public class C_Move : IPacket
 {
-    public float posX;
+    public bool isMove;
+	public float posX;
 	public float posY;
 	public float posZ;
+	public float dirX;
+	public float dirY;
+	public float dirZ;
 
     public ushort Protocol { get { return (ushort)PacketId.C_Move; } }
 
@@ -264,11 +289,19 @@ public class C_Move : IPacket
         count += sizeof(ushort);
         success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), (ushort)PacketId.C_Move);
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posX);
+        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.isMove);
+		count += sizeof(bool);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posX);
 		count += sizeof(float);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posY);
 		count += sizeof(float);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posZ);
+		count += sizeof(float);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirX);
+		count += sizeof(float);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirY);
+		count += sizeof(float);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirZ);
 		count += sizeof(float);
         success &= BitConverter.TryWriteBytes(s, count);
 
@@ -285,11 +318,19 @@ public class C_Move : IPacket
         ReadOnlySpan<byte> s = new ReadOnlySpan<byte>(segment.Array, segment.Offset, segment.Count);
         count += sizeof(ushort);
         count += sizeof(ushort);
-        this.posX = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+        this.isMove = BitConverter.ToBoolean(s.Slice(count,s.Length-count));
+		count += sizeof(bool);
+		this.posX = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 		count += sizeof(float);
 		this.posY = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 		count += sizeof(float);
 		this.posZ = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+		count += sizeof(float);
+		this.dirX = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+		count += sizeof(float);
+		this.dirY = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+		count += sizeof(float);
+		this.dirZ = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 		count += sizeof(float);
     }
 }
@@ -298,9 +339,13 @@ public class C_Move : IPacket
 public class S_BroadcastMove : IPacket
 {
     public int playerId;
+	public bool isMove;
 	public float posX;
 	public float posY;
 	public float posZ;
+	public float dirX;
+	public float dirY;
+	public float dirZ;
 
     public ushort Protocol { get { return (ushort)PacketId.S_BroadcastMove; } }
 
@@ -317,11 +362,19 @@ public class S_BroadcastMove : IPacket
         count += sizeof(ushort);
         success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.playerId);
 		count += sizeof(int);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.isMove);
+		count += sizeof(bool);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posX);
 		count += sizeof(float);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posY);
 		count += sizeof(float);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.posZ);
+		count += sizeof(float);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirX);
+		count += sizeof(float);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirY);
+		count += sizeof(float);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.dirZ);
 		count += sizeof(float);
         success &= BitConverter.TryWriteBytes(s, count);
 
@@ -340,11 +393,19 @@ public class S_BroadcastMove : IPacket
         count += sizeof(ushort);
         this.playerId = BitConverter.ToInt32(s.Slice(count,s.Length-count));
 		count += sizeof(int);
+		this.isMove = BitConverter.ToBoolean(s.Slice(count,s.Length-count));
+		count += sizeof(bool);
 		this.posX = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 		count += sizeof(float);
 		this.posY = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 		count += sizeof(float);
 		this.posZ = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+		count += sizeof(float);
+		this.dirX = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+		count += sizeof(float);
+		this.dirY = BitConverter.ToSingle(s.Slice(count,s.Length-count));
+		count += sizeof(float);
+		this.dirZ = BitConverter.ToSingle(s.Slice(count,s.Length-count));
 		count += sizeof(float);
     }
 }

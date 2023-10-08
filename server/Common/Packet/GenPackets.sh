@@ -8,8 +8,13 @@ cp ./GenPackets.cs /Users/sy/Desktop/unitygame/test/Assets/Scripts/Packet/GenPac
 
 cp ./GenPackets.cs ../../server/Packet/GenPackets.cs
 
+cp ./GenPackets.cs ../../../new_game/game/Assets/Scripts/Packet/GenPackets.cs
+
 cp ./ClientPacketManager.cs ../../DummyClient/Packet/ClientPacketManager.cs
+
+cp ./ClientPacketManager.cs ../../../new_game/game/Assets/Scripts/Packet/ClientPacketManager.cs
 
 cp ./ClientPacketManager.cs /Users/sy/Desktop/unitygame/test/Assets/Scripts/Packet/ClientPacketManager.cs
 
 cp ./ServerPacketManager.cs ../../server/Packet/ServerPacketManager.cs
+
