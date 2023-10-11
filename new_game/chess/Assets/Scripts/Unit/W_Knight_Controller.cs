@@ -11,6 +11,20 @@ public class W_Knight_Controller : Base_Controller
     {
         First = false;
     }
+
+    public override bool AttackTarget(Vector2 target, Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
+    {
+        
+        foreach (Vector2 v in togo)
+        {
+            dest.x = myPosition.x + v.x;
+            dest.y = myPosition.y + v.y;
+            if (dest == target) return true;
+
+        }
+        return false;
+    }
+
     public override bool AttackKing(Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
     {
         GameObject temp;

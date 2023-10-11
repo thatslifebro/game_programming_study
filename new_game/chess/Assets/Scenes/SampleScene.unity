@@ -694,7 +694,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StartWithWhiteView: 0
   SWWV: 0
-  Tilemap: {fileID: 0}
+  tilemap: {fileID: 0}
 --- !u!4 &1317694047
 Transform:
   m_ObjectHideFlags: 0

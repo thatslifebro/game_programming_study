@@ -10,6 +10,39 @@ public class B_Rook_Controller : Base_Controller
     {
         First = false;
     }
+
+    public override bool AttackTarget(Vector2 target, Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
+    {
+        GameObject temp;
+
+        foreach (Vector2 v in togo)
+        {
+            dest.x = myPosition.x;
+            dest.y = myPosition.y;
+            while (true)
+            {
+                dest.x += v.x;
+                dest.y += v.y;
+                if (dest.x > 3 || dest.x < -4 || dest.y > 3 || dest.y < -4)
+                    break;
+
+                if (UnitMap.TryGetValue(dest, out temp) == false)
+                {
+                    if (dest == target) return true;
+                }
+                else
+                {
+                    if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
+                    {
+                        if (dest == target) return true;
+                    }
+                    else break;
+                }
+            }
+        }
+        return false;
+    }
+
     public override bool AttackKing(Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
     {
         GameObject temp;

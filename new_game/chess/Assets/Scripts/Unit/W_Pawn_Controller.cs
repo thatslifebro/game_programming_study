@@ -10,6 +10,22 @@ public class W_Pawn_Controller : Base_Controller
     List<Vector2> togo = new List<Vector2>();
     Vector2 dest = new Vector2();
 
+    public override bool AttackTarget(Vector2 target, Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
+    {
+        for (int i = 2; i < 4; i++)
+        {
+            Vector2 v = togo[i];
+            dest.x = myPosition.x + v.x;
+            dest.y = myPosition.y + v.y;
+
+            if (dest == target)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public override bool AttackKing(Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
     {
         GameObject temp;

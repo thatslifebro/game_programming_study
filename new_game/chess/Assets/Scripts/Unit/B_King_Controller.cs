@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 using static UnityEngine.ParticleSystem;
 
@@ -11,6 +12,20 @@ public class B_King_Controller : Base_Controller
     {
         First = false;
     }
+
+    public override bool AttackTarget(Vector2 target, Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
+    {
+        
+        foreach (Vector2 v in togo)
+        {
+            dest.x = myPosition.x + v.x;
+            dest.y = myPosition.y + v.y;
+            if (dest == target) return true;
+
+        }
+        return false;
+    }
+
     public override bool AttackKing(Vector2 myPosition, Dictionary<Vector2, GameObject> UnitMap)
     {
         GameObject temp;
@@ -56,40 +71,54 @@ public class B_King_Controller : Base_Controller
             Vector2 target;
             if (left)
             {
+                bool attacked = false;
                 for (int j = 0; j < 3; j++)
                 {
                     target = new Vector2(chosenPosition.x - j, chosenPosition.y);
                     for (i = 0; i < 64; i++)
                     {
-                        if (UnitMap.TryGetValue(new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4), out temp))
+                        Vector2 v = new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4);
+                        if (UnitMap.TryGetValue(v, out temp))
                         {
                             if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
                             {
-                                left = left || temp.GetComponent<Base_Controller>().AttackKing(target, UnitMap);
+                                attacked = attacked || temp.GetComponent<Base_Controller>().AttackTarget(target, v, UnitMap);
                             }
                         }
                     }
                 }
+                if (attacked) left = false;
                 
             }
 
             if (right)
             {
+                Debug.Log("right");
+                bool attacked = false;
                 for (int j = 0; j < 3; j++)
                 {
                     target = new Vector2(chosenPosition.x + j, chosenPosition.y);
                     for (i = 0; i < 64; i++)
                     {
-                        if (UnitMap.TryGetValue(new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4), out temp))
+                        Vector2 v = new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4);
+                        if (UnitMap.TryGetValue(v, out temp))
                         {
                             if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
                             {
-                                right = right || temp.GetComponent<Base_Controller>().AttackKing(target, UnitMap);
+                                attacked = attacked || temp.GetComponent<Base_Controller>().AttackTarget(target,v, UnitMap);
+                                if(temp.GetComponent<Base_Controller>().AttackTarget(target, v, UnitMap))
+                                {
+                                    Debug.Log($"True : ({v.x},{v.y})");
+                                }
+                                else
+                                {
+                                    Debug.Log($"False : ({v.x},{v.y})");
+                                }
                             }
                         }
                     }
                 }
-
+                if (attacked) right = false;
             }
 
 
