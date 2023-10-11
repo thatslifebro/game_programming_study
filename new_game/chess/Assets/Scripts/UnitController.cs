@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -23,11 +24,11 @@ public class UnitController : MonoBehaviour
     GameObject chosenUnit;
     Vector2 chosenUnitPosition;
 
-    public static List<GameObject> DeadWhite = new List<GameObject>();
-    public static List<GameObject> DeadBlack = new List<GameObject>();
+    public List<GameObject> DeadWhite = new List<GameObject>();
+    public List<GameObject> DeadBlack = new List<GameObject>();
 
-    public static Dictionary<Vector2, GameObject> UnitMap = new Dictionary<Vector2, GameObject>();
-    public static Dictionary<Vector2, GameObject> PointerMap = new Dictionary<Vector2, GameObject>();
+    public Dictionary<Vector2, GameObject> UnitMap = new Dictionary<Vector2, GameObject>();
+    public Dictionary<Vector2, GameObject> PointerMap = new Dictionary<Vector2, GameObject>();
 
 
     void Start()
@@ -64,131 +65,141 @@ public class UnitController : MonoBehaviour
             bool clickBoard = PointerMap.TryGetValue(clickPosition, out pointer);
 
             if (!clickBoard) return;
+            else ClickBoardHandler(clickedUnitOrNot,unit,pointer,clickPosition);
 
-            //상대방꺼 누르면
-            if(clickedUnitOrNot && !choosing && unit.GetComponent<Base_Controller>().AmIWhite != TurnIsWhite)
-            {
-                Debug.Log("상대꺼누름");
-                return;
-            }
-            //캐슬링
-            if (choosing&&pointer.activeSelf && clickedUnitOrNot)
-            {
-                Debug.Log("캐슬링");
-                
-                if (chosenUnit.GetComponent<Base_Controller>().IsKing && unit.GetComponent<Base_Controller>().IsRook)
-                {
-                    chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
-                    chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition, UnitMap, PointerMap);
-                    if (clickPosition.x == -4)
-                    {
-                        UnitMap.Add(new Vector2(chosenUnitPosition.x - 2, chosenUnitPosition.y), chosenUnit);
-                        UnitMap.Remove(chosenUnitPosition);
-                        UnitMap.Add(new Vector2(chosenUnitPosition.x - 1, chosenUnitPosition.y), unit);
-                        UnitMap.Remove(clickPosition);
-                        chosenUnit.transform.position = new Vector2(chosenUnitPosition.x - 2, chosenUnitPosition.y) * interval + offset;
-                        unit.transform.position = new Vector2(chosenUnitPosition.x - 1, chosenUnitPosition.y) * interval + offset;
-                    }
-                    else if (clickPosition.x == 3)
-                    {
-                        UnitMap.Add(new Vector2(chosenUnitPosition.x + 2, chosenUnitPosition.y), chosenUnit);
-                        UnitMap.Remove(chosenUnitPosition);
-                        UnitMap.Add(new Vector2(chosenUnitPosition.x + 1, chosenUnitPosition.y), unit);
-                        UnitMap.Remove(clickPosition);
-                        chosenUnit.transform.position = new Vector2(chosenUnitPosition.x + 2, chosenUnitPosition.y) * interval + offset;
-                        unit.transform.position = new Vector2(chosenUnitPosition.x + 1, chosenUnitPosition.y) * interval + offset;
-                    }
-                    chosenUnit.GetComponent<Base_Controller>().FirstFalse();
-                    unit.GetComponent<Base_Controller>().FirstFalse();
-                    TurnIsWhite = !TurnIsWhite;
-                    choosing = false;
-                    chosenUnit = null;
-                    return;
-                }
-                
-
-
-            }
-
-            // 고르기 
-            if (clickedUnitOrNot && !choosing)
-            {
-                Debug.Log("고르기");
-                choosing = true;
-                chosenUnit = unit;
-                unit.GetComponent<Base_Controller>().ToggleSelected();
-                chosenUnitPosition = clickPosition;
-                unit.GetComponent<Base_Controller>().ShowPath(chosenUnitPosition, UnitMap, PointerMap);
-            }
-            //chosen, 아무것도 없는 곳으로 이동 
-            else if(!clickedUnitOrNot && pointer.activeSelf && choosing)
-            {
-                Debug.Log("이동");
-                chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
-                chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition, UnitMap, PointerMap);
-                UnitMap.Add(clickPosition, chosenUnit);
-                UnitMap.Remove(chosenUnitPosition);
-                if (Rollback())
-                {
-                    UnitMap.Add(chosenUnitPosition, chosenUnit);
-                    UnitMap.Remove(clickPosition);
-                }
-                else
-                {
-                    chosenUnit.transform.position = clickPosition * interval + offset;
-                    chosenUnit.GetComponent<Base_Controller>().FirstFalse();
-                    TurnIsWhite = !TurnIsWhite;
-                }
-                choosing = false;
-                chosenUnit = null;
-            }
-            //chosen, 공격
-            else if (clickedUnitOrNot && pointer.activeSelf && choosing)
-            {
-                Debug.Log("공격");
-                if(unit.GetComponent<Base_Controller>().AmIWhite != TurnIsWhite)
-                {
-                    chosenUnit.GetComponent<Base_Controller>().FirstFalse();
-                    UnitMap.Remove(clickPosition);
-                    UnitMap.Add(clickPosition, chosenUnit);
-                    UnitMap.Remove(chosenUnitPosition);
-
-                    if (Rollback())
-                    {
-                        UnitMap.Add(chosenUnitPosition, chosenUnit);
-                        UnitMap.Remove(clickPosition);
-                        UnitMap.Add(clickPosition, unit);
-                    }
-                    else
-                    {
-                        unit.SetActive(false);
-                        chosenUnit.transform.position = clickPosition * interval + offset;
-                        TurnIsWhite = !TurnIsWhite;
-                    }
-                }
-                chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
-                chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition, UnitMap, PointerMap);
-                choosing = false;
-                chosenUnit = null;
-            }
-            else
-            {
-                if (choosing)
-                {
-                    chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
-                }
-                choosing = false;
-                if(chosenUnit!=null)
-                    chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition, UnitMap, PointerMap);
-            }
             
         }
     }
 
+    void ClickBoardHandler(bool clickedUnitOrNot,GameObject unit, GameObject pointer, Vector2 clickPosition)
+    {
+        //상대방꺼 누르면
+        if (clickedUnitOrNot && !choosing && unit.GetComponent<Base_Controller>().AmIWhite != TurnIsWhite)
+        {
+            Debug.Log("상대꺼누름");
+            return;
+        }
+        //캐슬링
+        if (choosing && pointer.activeSelf && clickedUnitOrNot)
+        {
+            
+
+            if (chosenUnit.GetComponent<Base_Controller>().IsKing && unit.GetComponent<Base_Controller>().IsRook)
+            {
+                chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
+                chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition);
+                if (clickPosition.x == -4)
+                {
+                    UnitMap.Add(new Vector2(chosenUnitPosition.x - 2, chosenUnitPosition.y), chosenUnit);
+                    UnitMap.Remove(chosenUnitPosition);
+                    UnitMap.Add(new Vector2(chosenUnitPosition.x - 1, chosenUnitPosition.y), unit);
+                    UnitMap.Remove(clickPosition);
+                    chosenUnit.transform.position = new Vector2(chosenUnitPosition.x - 2, chosenUnitPosition.y) * interval + offset;
+                    unit.transform.position = new Vector2(chosenUnitPosition.x - 1, chosenUnitPosition.y) * interval + offset;
+                    Debug.Log("캐슬링");
+                }
+                else if (clickPosition.x == 3)
+                {
+                    UnitMap.Add(new Vector2(chosenUnitPosition.x + 2, chosenUnitPosition.y), chosenUnit);
+                    UnitMap.Remove(chosenUnitPosition);
+                    UnitMap.Add(new Vector2(chosenUnitPosition.x + 1, chosenUnitPosition.y), unit);
+                    UnitMap.Remove(clickPosition);
+                    chosenUnit.transform.position = new Vector2(chosenUnitPosition.x + 2, chosenUnitPosition.y) * interval + offset;
+                    unit.transform.position = new Vector2(chosenUnitPosition.x + 1, chosenUnitPosition.y) * interval + offset;
+                    Debug.Log("캐슬링");
+                }
+               
+                chosenUnit.GetComponent<Base_Controller>().FirstFalse();
+                unit.GetComponent<Base_Controller>().FirstFalse();
+                TurnIsWhite = !TurnIsWhite;
+                choosing = false;
+                chosenUnit = null;
+                return;
+            }
+
+
+
+        }
+
+        // 고르기 
+        if (clickedUnitOrNot && !choosing)
+        {
+            Debug.Log("고르기");
+            choosing = true;
+            chosenUnit = unit;
+            unit.GetComponent<Base_Controller>().ToggleSelected();
+            chosenUnitPosition = clickPosition;
+            unit.GetComponent<Base_Controller>().ShowPath(chosenUnitPosition);
+        }
+        //chosen, 아무것도 없는 곳으로 이동 
+        else if (!clickedUnitOrNot && pointer.activeSelf && choosing)
+        {
+            
+            chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
+            chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition);
+            UnitMap.Add(clickPosition, chosenUnit);
+            UnitMap.Remove(chosenUnitPosition);
+            if (Rollback())
+            {
+                UnitMap.Add(chosenUnitPosition, chosenUnit);
+                UnitMap.Remove(clickPosition);
+            }
+            else
+            {
+                chosenUnit.transform.position = clickPosition * interval + offset;
+                chosenUnit.GetComponent<Base_Controller>().FirstFalse();
+                TurnIsWhite = !TurnIsWhite;
+                Debug.Log("이동");
+            }
+            choosing = false;
+            chosenUnit = null;
+        }
+        //chosen, 공격
+        else if (clickedUnitOrNot && pointer.activeSelf && choosing)
+        {
+            
+            if (unit.GetComponent<Base_Controller>().AmIWhite != TurnIsWhite)
+            {
+                chosenUnit.GetComponent<Base_Controller>().FirstFalse();
+                UnitMap.Remove(clickPosition);
+                UnitMap.Add(clickPosition, chosenUnit);
+                UnitMap.Remove(chosenUnitPosition);
+
+                if (Rollback())
+                {
+                    UnitMap.Add(chosenUnitPosition, chosenUnit);
+                    UnitMap.Remove(clickPosition);
+                    UnitMap.Add(clickPosition, unit);
+                }
+                else
+                {
+                    unit.SetActive(false);
+                    chosenUnit.transform.position = clickPosition * interval + offset;
+                    TurnIsWhite = !TurnIsWhite;
+                    Debug.Log("공격");
+                }
+            }
+            chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
+            chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition);
+            choosing = false;
+            chosenUnit = null;
+        }
+        else
+        {
+            if (choosing)
+            {
+                chosenUnit.GetComponent<Base_Controller>().ToggleSelected();
+            }
+            choosing = false;
+            if (chosenUnit != null)
+                chosenUnit.GetComponent<Base_Controller>().UnshowPath(chosenUnitPosition);
+        }
+
+    }
+
     bool Rollback()
     {
-        //내가 움직이고나서 
-        //상대팀 모든 기물의 showpath 해서 걸린 적이 king이면 true;
+        //King check
         bool answer = false;
         GameObject temp;
         for (int i = 0; i < 64; i++)
@@ -197,7 +208,7 @@ public class UnitController : MonoBehaviour
             {
                 if (temp.GetComponent<Base_Controller>().AmIWhite != TurnIsWhite)
                 {
-                    answer = answer || temp.GetComponent<Base_Controller>().AttackKing(new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4), UnitMap);
+                    answer = answer || temp.GetComponent<Base_Controller>().AttackKing(new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4));
                 }
             }
         }
