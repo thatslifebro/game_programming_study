@@ -12,7 +12,9 @@ public class B_Rook_Controller : RookBishopQueen
         First = true;
         IsKing = false;
         IsRook = true;
+        IsPawn = false;
         AmIWhite = false;
+        IsAlive = true;
         togo.Add(new Vector2(0, 1));
         togo.Add(new Vector2(0, -1));
         togo.Add(new Vector2(1, 0));

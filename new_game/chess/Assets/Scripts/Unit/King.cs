@@ -1,11 +1,129 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.ParticleSystem;
 
 public class King : KnightKing
 {
-    public override void ShowPath(Vector2 chosenPosition)
+    
+
+    public bool CheckMated()
+    {
+        if (MyKingChecked())
+        {
+            return !CanAvoidCheck();
+        }
+        return false;
+    }
+
+    public bool CanAvoidCheck()
+    {
+        bool answer = false;
+        GameObject temp;
+        for (int i = 0; i < 64; i++)
+        {
+            if (UnitMap.TryGetValue(new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4), out temp))
+            {
+                if (temp.GetComponent<Base_Controller>().AmIWhite == AmIWhite)
+                {
+                    answer = answer || temp.GetComponent<Base_Controller>().CanMove();
+                }
+            }
+        }
+
+        return answer;
+    }
+
+
+   
+
+    public override bool Move(Vector2 target)
+    {
+        ToggleSelected();
+        UnshowPath();
+        //1. 아무도 없는 곳 2. 있는데 상대팀 3. 있는데 우리(캐슬링)
+        GameObject targetUnit;
+
+        //아무도 없는곳 
+        if(!UnitMap.TryGetValue(target, out targetUnit))
+        {
+            UnitMap.Remove(myPosition);
+            UnitMap.Add(target, this.gameObject);
+            if (MyKingChecked())
+            {
+                UnitMap.Remove(target);
+                UnitMap.Add(myPosition, this.gameObject);
+                return false;
+            }
+            else
+            {
+                FirstFalse();
+                myPosition = target;
+                transform.position = target * interval + offset;
+                return true;
+            }
+        }
+        else
+        {
+            //상대팀 공격
+            if (targetUnit.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
+            {
+                UnitMap.Remove(myPosition);
+                UnitMap.Remove(target);
+                UnitMap.Add(target, this.gameObject);
+                if (MyKingChecked()) {
+                    UnitMap.Remove(target);
+                    UnitMap.Add(target, targetUnit);
+                    UnitMap.Add(myPosition, this.gameObject);
+                    return false;
+                }
+                else
+                {
+                    FirstFalse();
+                    myPosition = target;
+                    transform.position = target * interval + offset;
+                    targetUnit.SetActive(false);
+                    return true;
+                }
+                
+            }
+            //캐슬링 
+            else
+            {
+                ToggleSelected();
+                UnshowPath();
+                if (target.x == -4)
+                {
+                    UnitMap.Add(new Vector2(myPosition.x - 2, myPosition.y), this.gameObject);
+                    UnitMap.Remove(myPosition);
+                    UnitMap.Add(new Vector2(myPosition.x - 1, myPosition.y), targetUnit);
+                    UnitMap.Remove(target);
+                    transform.position = new Vector2(myPosition.x - 2, myPosition.y) * interval + offset;
+                    targetUnit.transform.position = new Vector2(myPosition.x - 1, myPosition.y) * interval + offset;
+                    Debug.Log("캐슬링");
+                }
+                else if (target.x == 3)
+                {
+                    UnitMap.Add(new Vector2(myPosition.x + 2, myPosition.y), this.gameObject);
+                    UnitMap.Remove(myPosition);
+                    UnitMap.Add(new Vector2(myPosition.x + 1, myPosition.y), targetUnit);
+                    UnitMap.Remove(target);
+                    transform.position = new Vector2(myPosition.x + 2, myPosition.y) * interval + offset;
+                    targetUnit.transform.position = new Vector2(myPosition.x + 1, myPosition.y) * interval + offset;
+                    Debug.Log("캐슬링");
+                }
+
+                FirstFalse();
+                targetUnit.GetComponent<Base_Controller>().FirstFalse();
+                return true;
+            }
+        }
+       
+        
+    }
+
+    public override void ShowPath()
     {
 
         GameObject temp;
@@ -17,15 +135,15 @@ public class King : KnightKing
             bool right = true;
             int i = 1;
             //비었는지 
-            while (chosenPosition.x - i > -4)
+            while (myPosition.x - i > -4)
             {
-                left = left && !UnitMap.TryGetValue(new Vector2(chosenPosition.x - i, chosenPosition.y), out temp);
+                left = left && !UnitMap.TryGetValue(new Vector2(myPosition.x - i, myPosition.y), out temp);
                 i++;
             }
             i = 1;
-            while (chosenPosition.x + i < 3)
+            while (myPosition.x + i < 3)
             {
-                right = right && !UnitMap.TryGetValue(new Vector2(chosenPosition.x + i, chosenPosition.y), out temp);
+                right = right && !UnitMap.TryGetValue(new Vector2(myPosition.x + i, myPosition.y), out temp);
                 i++;
             }
 
@@ -36,7 +154,7 @@ public class King : KnightKing
                 bool attacked = false;
                 for (int j = 0; j < 3; j++)
                 {
-                    target = new Vector2(chosenPosition.x - j, chosenPosition.y);
+                    target = new Vector2(myPosition.x - j, myPosition.y);
                     for (i = 0; i < 64; i++)
                     {
                         Vector2 v = new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4);
@@ -44,7 +162,7 @@ public class King : KnightKing
                         {
                             if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
                             {
-                                attacked = attacked || temp.GetComponent<Base_Controller>().AttackTarget(target, v);
+                                attacked = attacked || temp.GetComponent<Base_Controller>().AttackTarget(target);
                             }
                         }
                     }
@@ -59,7 +177,7 @@ public class King : KnightKing
                 bool attacked = false;
                 for (int j = 0; j < 3; j++)
                 {
-                    target = new Vector2(chosenPosition.x + j, chosenPosition.y);
+                    target = new Vector2(myPosition.x + j, myPosition.y);
                     for (i = 0; i < 64; i++)
                     {
                         Vector2 v = new Vector2(i % 8 - 4, (int)System.Math.Truncate((double)i / 8.0f) - 4);
@@ -67,7 +185,7 @@ public class King : KnightKing
                         {
                             if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
                             {
-                                attacked = attacked || temp.GetComponent<Base_Controller>().AttackTarget(target, v);
+                                attacked = attacked || temp.GetComponent<Base_Controller>().AttackTarget(target);
                             }
                         }
                     }
@@ -77,22 +195,22 @@ public class King : KnightKing
 
 
             //Pointer 변경
-            if (left && UnitMap.TryGetValue(new Vector2(-4, chosenPosition.y), out temp))
+            if (left && UnitMap.TryGetValue(new Vector2(-4, myPosition.y), out temp))
             {
                 if (temp.GetComponent<Base_Controller>().IsRook && temp.GetComponent<Base_Controller>().First)
                 {
-                    if (PointerMap.TryGetValue(new Vector2(-4, chosenPosition.y), out temp))
+                    if (PointerMap.TryGetValue(new Vector2(-4, myPosition.y), out temp))
                     {
                         temp.SetActive(true);
                     }
                 }
             }
 
-            if (right && UnitMap.TryGetValue(new Vector2(3, chosenPosition.y), out temp))
+            if (right && UnitMap.TryGetValue(new Vector2(3, myPosition.y), out temp))
             {
                 if (temp.GetComponent<Base_Controller>().IsRook && temp.GetComponent<Base_Controller>().First)
                 {
-                    if (PointerMap.TryGetValue(new Vector2(3, chosenPosition.y), out temp))
+                    if (PointerMap.TryGetValue(new Vector2(3, myPosition.y), out temp))
                     {
                         temp.SetActive(true);
                     }
@@ -103,8 +221,8 @@ public class King : KnightKing
         //moving
         foreach (Vector2 v in togo)
         {
-            dest.x = chosenPosition.x + v.x;
-            dest.y = chosenPosition.y + v.y;
+            dest.x = myPosition.x + v.x;
+            dest.y = myPosition.y + v.y;
 
             if (UnitMap.TryGetValue(dest, out temp) == false)
             {
@@ -126,24 +244,24 @@ public class King : KnightKing
         }
     }
 
-    public override void UnshowPath(Vector2 chosenPosition)
+    public override void UnshowPath()
     {
 
         GameObject temp;
         //castling
-        if (PointerMap.TryGetValue(new Vector2(-4, chosenPosition.y), out temp))
+        if (PointerMap.TryGetValue(new Vector2(-4, myPosition.y), out temp))
         {
             temp.SetActive(false);
         }
-        if (PointerMap.TryGetValue(new Vector2(3, chosenPosition.y), out temp))
+        if (PointerMap.TryGetValue(new Vector2(3, myPosition.y), out temp))
         {
             temp.SetActive(false);
         }
 
         foreach (Vector2 v in togo)
         {
-            dest.x = chosenPosition.x + v.x;
-            dest.y = chosenPosition.y + v.y;
+            dest.x = myPosition.x + v.x;
+            dest.y = myPosition.y + v.y;
             if (PointerMap.TryGetValue(dest, out temp))
                 temp.SetActive(false);
         }

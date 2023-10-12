@@ -14,8 +14,11 @@ public class B_Pawn_Controller : Pawn
         First = true;
         IsKing = false;
         IsRook = false;
+        IsPawn = true;
         int swwv = GameObject.Find("UnitController").GetComponent<UnitController>().SWWV;
         AmIWhite = false;
+        IsAlive = true;
+        promotion = false;
         if (swwv == 0)
         {
             togo.Add(new Vector2(0, 1));

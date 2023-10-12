@@ -11,6 +11,7 @@ public class B_Queen_Controller : RookBishopQueen
         PointerMap = GameObject.Find("UnitController").GetComponent<UnitController>().PointerMap;
         IsKing = false;
         AmIWhite = false;
+        IsAlive = true;
         togo.Add(new Vector2(0, 1));
         togo.Add(new Vector2(0, -1));
         togo.Add(new Vector2(1, 0));

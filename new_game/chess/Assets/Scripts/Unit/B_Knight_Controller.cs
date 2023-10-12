@@ -12,6 +12,8 @@ public class B_Knight_Controller : Knight
         PointerMap = GameObject.Find("UnitController").GetComponent<UnitController>().PointerMap;
         IsKing = false;
         AmIWhite = false;
+        IsPawn = false;
+        IsAlive = true;
         togo.Add(new Vector2(1, 2));
         togo.Add(new Vector2(1, -2));
         togo.Add(new Vector2(-1, 2));

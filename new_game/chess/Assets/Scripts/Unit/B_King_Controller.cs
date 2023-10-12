@@ -14,7 +14,9 @@ public class B_King_Controller : King
         First = true;
         IsKing = true;
         IsRook = false;
+        IsPawn = false;
         AmIWhite = false;
+        IsAlive = true;
         togo.Add(new Vector2(0, 1));
         togo.Add(new Vector2(0, -1));
         togo.Add(new Vector2(1, 0));

@@ -10,7 +10,9 @@ public class W_Knight_Controller : Knight
         UnitMap = GameObject.Find("UnitController").GetComponent<UnitController>().UnitMap;
         PointerMap = GameObject.Find("UnitController").GetComponent<UnitController>().PointerMap;
         IsKing = false;
+        IsPawn = false;
         AmIWhite = true;
+        IsAlive = true;
         togo.Add(new Vector2(1, 2));
         togo.Add(new Vector2(1, -2));
         togo.Add(new Vector2(-1, 2));
