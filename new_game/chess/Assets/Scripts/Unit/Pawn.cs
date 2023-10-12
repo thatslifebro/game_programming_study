@@ -6,6 +6,7 @@ using static UnityEngine.ParticleSystem;
 public class Pawn : Base_Controller
 {
     public bool promotion;
+    public bool EnPassant;
 
     public override bool CanMove()
     {
@@ -79,6 +80,18 @@ public class Pawn : Base_Controller
         //아무도 없는곳 
         if (!UnitMap.TryGetValue(target, out targetUnit))
         {
+            if(UnitMap.TryGetValue(new Vector2(target.x, target.y - togo[3].y), out targetUnit))
+            {
+                if (targetUnit.GetComponent<Base_Controller>().IsPawn)
+                {
+                    if (targetUnit.GetComponent<Pawn>().EnPassant)
+                    {
+                        UnitMap.Remove(new Vector2(target.x, target.y - togo[3].y));
+                        targetUnit.SetActive(false);
+                    }
+                }
+                
+            }
             UnitMap.Remove(myPosition);
             UnitMap.Add(target, this.gameObject);
             if (MyKingChecked())
@@ -90,6 +103,11 @@ public class Pawn : Base_Controller
             else
             {
                 FirstFalse();
+                //앙파상설
+                if(target.y - myPosition.y==-2 || target.y - myPosition.y == 2)
+                {
+                    EnPassant = true;
+                }
                 myPosition = target;
                 transform.position = target * interval + offset;
                 PromotionCheck();
@@ -200,6 +218,26 @@ public class Pawn : Base_Controller
                 }
             }
         }
+
+        //앙파상
+        for(int i = 0; i < 2; i++)
+        {
+            dest.x = myPosition.x -1+2*i;
+            dest.y = myPosition.y;
+            
+            if(UnitMap.TryGetValue(dest, out temp))
+            {
+                if (temp.GetComponent<Base_Controller>().IsPawn)
+                {
+                    if (temp.GetComponent<Pawn>().EnPassant)
+                    {
+                        if (PointerMap.TryGetValue(new Vector2(dest.x, dest.y + togo[3].y) , out temp))
+                            temp.SetActive(true);
+                    }
+                }
+            }
+        }
+        
 
     }
 

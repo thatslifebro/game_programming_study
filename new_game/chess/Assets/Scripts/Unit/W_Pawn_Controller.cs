@@ -13,6 +13,7 @@ public class W_Pawn_Controller : Pawn
         IsKing = false;
         IsRook = false;
         IsPawn = true;
+        EnPassant = false;
         IsAlive = true;
         promotion = false;
         int swwv = GameObject.Find("UnitController").GetComponent<UnitController>().SWWV;

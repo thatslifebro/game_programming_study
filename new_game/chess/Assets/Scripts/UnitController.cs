@@ -7,12 +7,13 @@ using UnityEngine.Tilemaps;
 
 public class UnitController : MonoBehaviour
 {
+    
     public static float interval = 1.045f;
     public static Vector2 offset = new Vector2(0.5225f,0.5225f);
 
     public bool StartWithWhiteView;
     public int SWWV;
-
+    public int turn;
     Vector2 MousePosition;
     Camera Camera;
     public Tilemap tilemap;
@@ -23,6 +24,7 @@ public class UnitController : MonoBehaviour
 
     GameObject chosenUnit;
     Vector2 chosenUnitPosition;
+    
 
     public List<GameObject> DeadWhite = new List<GameObject>();
     public List<GameObject> DeadBlack = new List<GameObject>();
@@ -37,15 +39,18 @@ public class UnitController : MonoBehaviour
     public GameObject PromotionBoardWhite;
 
     public bool promotion;
+    public GameObject EnPaccantUnit;
+    public bool enPaccant;
 
     void Start()
     {
-        
+        turn = 1;
         Camera = GameObject.Find("Main Camera").GetComponent<Camera>();
         tilemap = GameObject.Find("Tilemap").GetComponent<Tilemap>();
         StartWithWhiteView = true;
         TurnIsWhite = StartWithWhiteView;
         promotion = false;
+        enPaccant = false;
         SWWV = 0;
         if (StartWithWhiteView)
             SWWV = 1;
@@ -117,6 +122,19 @@ public class UnitController : MonoBehaviour
                         else
                             PromotionBoardBlack.SetActive(true);
                         return;
+                    }
+
+                    if (enPaccant == true)
+                    {
+                        EnPaccantUnit.GetComponent<Pawn>().EnPassant = false;
+                        enPaccant = false;
+                    }
+
+                    //움직인 놈이 앙파상 걸릴 수도 있다면 
+                    if (chosenUnit.GetComponent<Pawn>().EnPassant)
+                    {
+                        EnPaccantUnit = chosenUnit;
+                        enPaccant = true;
                     }
                 }
                 TurnIsWhite = !TurnIsWhite;
