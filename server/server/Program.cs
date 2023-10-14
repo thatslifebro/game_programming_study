@@ -14,13 +14,13 @@ namespace Server
     
     class Program
     {
-        public static GameRoom Room = new GameRoom();
+        public static WaitingRoom waitingRoom = new WaitingRoom();
 
         static Listener _listener = new Listener();
 
         static void FlushRoom()
         {
-            Room.Push(() => Room.Flush());
+            waitingRoom.Push(() => waitingRoom.Flush());
             JobTimer.Instance.Push(FlushRoom, 250);
         }
 
@@ -40,7 +40,7 @@ namespace Server
             _listener.init(() => { return SessionManager.Instance.Generate(); }, endPoint);
             Console.WriteLine("Listenning...");
 
-            JobTimer.Instance.Push(FlushRoom);
+           JobTimer.Instance.Push(FlushRoom);
             
             while (true)
             {

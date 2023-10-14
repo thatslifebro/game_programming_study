@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using static UnityEngine.ParticleSystem;
 
-public class Pawn : Base_Controller
+public abstract class Pawn : Base_Controller
 {
     public bool promotion;
     public bool EnPassant;
+
+    public abstract void ChangeTogo(int swwv);
 
     public override bool CanMove()
     {
@@ -255,4 +257,6 @@ public class Pawn : Base_Controller
                 temp.SetActive(false);
         }
     }
+
+    
 }

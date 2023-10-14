@@ -34,6 +34,25 @@ public class W_Pawn_Controller : Pawn
         }
     }
 
+    public override void ChangeTogo(int swwv)
+    {
+        togo.Clear();
+        if (swwv == 1)
+        {
+            togo.Add(new Vector2(0, 1));
+            togo.Add(new Vector2(0, 2));
+            togo.Add(new Vector2(-1, 1));
+            togo.Add(new Vector2(1, 1));
+        }
+        else
+        {
+            togo.Add(new Vector2(0, -1));
+            togo.Add(new Vector2(0, -2));
+            togo.Add(new Vector2(-1, -1));
+            togo.Add(new Vector2(1, -1));
+        }
+    }
+
     void Update()
     {
         

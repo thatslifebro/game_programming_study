@@ -18,14 +18,12 @@ namespace DummyClient
 			{
 				foreach(ServerSession session in _sessions)
 				{
-					C_Move movePacket = new C_Move();
-					movePacket.posX = _rand.Next(-50,50);
-					movePacket.posY = 0;
-                    movePacket.posZ = _rand.Next(-50, 50);
+					//C_Move movePacket = new C_Move();
+					
 
-                    ArraySegment<byte> segment = movePacket.Serialize();
+     //               ArraySegment<byte> segment = movePacket.Serialize();
 
-					session.Send(movePacket.Serialize());
+					//session.Send(movePacket.Serialize());
 				}
 			}
 		}

@@ -33,14 +33,14 @@ namespace DummyClient
             
             while (true)
             {
-                try
-                {
-                    SessionManager.Instance.SendForEach();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
+                //try
+                //{
+                //    //SessionManager.Instance.SendForEach();
+                //}
+                //catch (Exception e)
+                //{
+                //    Console.WriteLine(e.ToString());
+                //}
 
                 Thread.Sleep(250);
             }

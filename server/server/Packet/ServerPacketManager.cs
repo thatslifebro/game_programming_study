@@ -20,6 +20,8 @@ public class PacketManager
 
     public void Register()
     {
+        _makeFunc.Add((ushort)PacketId.C_RequestMatching, MakePacket<C_RequestMatching>);
+        _handler.Add((ushort)PacketId.C_RequestMatching, PacketHandler.C_RequestMatchingHandler);
         _makeFunc.Add((ushort)PacketId.C_LeaveGame, MakePacket<C_LeaveGame>);
         _handler.Add((ushort)PacketId.C_LeaveGame, PacketHandler.C_LeaveGameHandler);
         _makeFunc.Add((ushort)PacketId.C_Move, MakePacket<C_Move>);

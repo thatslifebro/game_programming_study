@@ -6,7 +6,7 @@ abstract public class Base_Controller : MonoBehaviour
 {
     public static float interval = 1.045f;
     public static Vector2 offset = new Vector2(0.5225f, 0.5225f);
-
+    
     public List<Vector2> togo = new List<Vector2>();
     public Vector2 dest = new Vector2();
 

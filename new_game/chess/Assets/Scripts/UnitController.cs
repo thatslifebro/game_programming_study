@@ -11,6 +11,15 @@ public class UnitController : MonoBehaviour
     public static float interval = 1.045f;
     public static Vector2 offset = new Vector2(0.5225f,0.5225f);
 
+    public enum GameMode{
+        StartMenu,
+        SinglePlay,
+        MultiPlay
+    }
+    public GameMode mode = GameMode.StartMenu;
+
+    public List<GameObject> AllUnits = new List<GameObject>();
+
     public bool StartWithWhiteView;
     public int SWWV;
     public int turn;
@@ -56,8 +65,7 @@ public class UnitController : MonoBehaviour
             SWWV = 1;
 
         CreatePointers();
-        ResetGame();
-
+        StartGame();
         tilemap.SetTileFlags(new Vector3Int(0, 0, 0), TileFlags.None);
         tilemap.SetColor(new Vector3Int(0, 0,0), Color.yellow);
     }
@@ -65,7 +73,7 @@ public class UnitController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (mode!=GameMode.StartMenu && Input.GetMouseButtonDown(0))
         {
             MousePosition = Input.mousePosition;
             MousePosition = Camera.ScreenToWorldPoint(MousePosition);
@@ -76,7 +84,7 @@ public class UnitController : MonoBehaviour
 
             bool clickedUnitOrNot = UnitMap.TryGetValue(clickPosition, out unit);
             bool clickBoard = PointerMap.TryGetValue(clickPosition, out pointer);
-
+            Debug.Log($"{clickedUnitOrNot}");
             
             if (promotion)
             {
@@ -283,7 +291,62 @@ public class UnitController : MonoBehaviour
         choosing = false;
     }
 
-    void ResetGame()
+    public void RotateBoard()
+    {
+        StartWithWhiteView = !StartWithWhiteView;
+        SWWV = 0;
+        if (StartWithWhiteView)
+            SWWV = 1;
+        Dictionary<Vector2, GameObject> newUnitMap = new Dictionary<Vector2, GameObject>();
+        foreach (KeyValuePair<Vector2, GameObject> pair in UnitMap)
+        {
+            newUnitMap.Add(new Vector2(-1 * pair.Key.x - 1, -1 * pair.Key.y - 1), pair.Value);
+            pair.Value.transform.position = new Vector2(-1 * pair.Key.x - 1, -1 * pair.Key.y - 1) * interval + offset;
+            pair.Value.GetComponent<Base_Controller>().myPosition = new Vector2(-1 * pair.Key.x - 1, -1 * pair.Key.y - 1);
+            if (pair.Value.GetComponent<Base_Controller>().IsPawn)
+            {
+                pair.Value.GetComponent<Pawn>().ChangeTogo(SWWV);
+            }
+        }
+        UnitMap.Clear();
+        foreach (KeyValuePair<Vector2,GameObject> pair in newUnitMap)
+        {
+            UnitMap.Add(pair.Key, pair.Value);
+        }
+        newUnitMap.Clear();
+        
+    }
+
+    public void ResetGame()
+    {
+        DeadWhite.Clear();
+        DeadBlack.Clear();
+        UnitMap.Clear();
+        
+        foreach (GameObject obj in AllUnits)
+        {
+            Destroy(obj);
+        }
+        AllUnits.Clear();
+        for (int i = 0; i < 64; i++)
+        {
+            GameObject temp;
+            PointerMap.TryGetValue(new Vector2(-4 + i % 8, 3 - (int)System.Math.Truncate((double)i / 8)), out temp);
+            temp.SetActive(false);
+        }
+        
+
+        StartWithWhiteView = true;
+        TurnIsWhite = StartWithWhiteView;
+        promotion = false;
+        enPaccant = false;
+        SWWV = 0;
+        if (StartWithWhiteView)
+            SWWV = 1;
+        StartGame();
+    }
+
+    void StartGame()
     {
         GameObject B_Pawn_Prefab = Resources.Load<GameObject>("Prefabs/B_Pawn_2D");
         GameObject B_Rook_Prefab = Resources.Load<GameObject>("Prefabs/B_Rook_2D");
@@ -307,6 +370,7 @@ public class UnitController : MonoBehaviour
             B_Pawn.transform.position = new Vector2(-4 + i, -3+5*SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-4 + i, -3 + 5 * SWWV), B_Pawn);
             B_Pawn.GetComponent<Base_Controller>().myPosition = new Vector2(-4 + i, -3 + 5 * SWWV);
+            AllUnits.Add(B_Pawn);
         }
         //B_Rook
         for (int i = 0; i < 2; i++)
@@ -315,6 +379,7 @@ public class UnitController : MonoBehaviour
             B_Rook.transform.position = new Vector2(-4 + 7 * i, -4+7*SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-4 + 7 * i, -4+ 7 * SWWV), B_Rook);
             B_Rook.GetComponent<Base_Controller>().myPosition = new Vector2(-4 + 7*i, -4 + 7 * SWWV);
+            AllUnits.Add(B_Rook);
         }
         //B_Knight
         for (int i = 0; i < 2; i++)
@@ -323,6 +388,7 @@ public class UnitController : MonoBehaviour
             B_Knight.transform.position = new Vector2(-3 + 5 * i, -4 + 7 * SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-3 + 5 * i, -4 + 7 * SWWV), B_Knight);
             B_Knight.GetComponent<Base_Controller>().myPosition = new Vector2(-3 + 5 * i, -4 + 7 * SWWV);
+            AllUnits.Add(B_Knight);
         }
         //B_Bishop
         for (int i = 0; i < 2; i++)
@@ -331,17 +397,20 @@ public class UnitController : MonoBehaviour
             B_Bishop.transform.position = new Vector2(-2 + 3 * i, -4 + 7 * SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-2 + 3 * i, -4 + 7 * SWWV), B_Bishop);
             B_Bishop.GetComponent<Base_Controller>().myPosition = new Vector2(-2 + 3 * i, -4 + 7 * SWWV);
+            AllUnits.Add(B_Bishop);
         }
         //B_Queen
         GameObject B_Queen = Instantiate(B_Queen_Prefab);
         B_Queen.transform.position = new Vector2(0-SWWV, -4 + 7 * SWWV) * interval + offset;
         UnitMap.Add(new Vector2(0 - SWWV, -4 + 7 * SWWV), B_Queen);
         B_Queen.GetComponent<Base_Controller>().myPosition = new Vector2(0 - SWWV, -4 + 7 * SWWV);
+        AllUnits.Add(B_Queen);
         //B_King
         B_King = Instantiate(B_King_Prefab);
         B_King.transform.position = new Vector2(-1+SWWV, -4 + 7 * SWWV) * interval + offset;
         UnitMap.Add(new Vector2(-1 + SWWV, -4 + 7 * SWWV), B_King);
         B_King.GetComponent<Base_Controller>().myPosition = new Vector2(-1 + SWWV, -4 + 7 * SWWV);
+        AllUnits.Add(B_King);
         //W_Pawn
         for (int i = 0; i < 8; i++)
         {
@@ -349,6 +418,7 @@ public class UnitController : MonoBehaviour
             W_Pawn.transform.position = new Vector2(-4 + i, 2-5*SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-4 + i, 2 - 5 * SWWV), W_Pawn);
             W_Pawn.GetComponent<Base_Controller>().myPosition = new Vector2(-4 + i, 2 - 5 * SWWV);
+            AllUnits.Add(W_Pawn);
         }
         //W_Rook
         for (int i = 0; i < 2; i++)
@@ -357,6 +427,7 @@ public class UnitController : MonoBehaviour
             W_Rook.transform.position = new Vector2(-4 + 7 * i, 3 - 7 * SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-4 + 7 * i, 3 - 7 * SWWV), W_Rook);
             W_Rook.GetComponent<Base_Controller>().myPosition = new Vector2(-4 + 7 * i, 3 - 7 * SWWV);
+            AllUnits.Add(W_Rook);
         }
         //W_Knight
         for (int i = 0; i < 2; i++)
@@ -365,6 +436,7 @@ public class UnitController : MonoBehaviour
             W_Knight.transform.position = new Vector2(-3 + 5 * i, 3 - 7 * SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-3 + 5 * i, 3 - 7 * SWWV), W_Knight);
             W_Knight.GetComponent<Base_Controller>().myPosition = new Vector2(-3 + 5 * i, 3 - 7 * SWWV);
+            AllUnits.Add(W_Knight);
         }
         //W_Bishop
         for (int i = 0; i < 2; i++)
@@ -373,21 +445,26 @@ public class UnitController : MonoBehaviour
             W_Bishop.transform.position = new Vector2(-2 + 3 * i, 3 - 7 * SWWV) * interval + offset;
             UnitMap.Add(new Vector2(-2 + 3 * i, 3 - 7 * SWWV), W_Bishop);
             W_Bishop.GetComponent<Base_Controller>().myPosition = new Vector2(-2 + 3 * i, 3 - 7 * SWWV);
+            AllUnits.Add(W_Bishop);
         }
         //W_Queen
         GameObject W_Queen = Instantiate(W_Queen_Prefab);
         W_Queen.transform.position = new Vector2(0 - SWWV, 3 - 7 * SWWV) * interval + offset;
         UnitMap.Add(new Vector2(0 - SWWV, 3 - 7 * SWWV), W_Queen);
         W_Queen.GetComponent<Base_Controller>().myPosition = new Vector2(0 - SWWV, 3 - 7 * SWWV);
+        AllUnits.Add(W_Queen);
         //W_King
         W_King = Instantiate(W_King_Prefab);
         W_King.transform.position = new Vector2(-1+SWWV, 3 - 7 * SWWV) * interval + offset;
         UnitMap.Add(new Vector2(-1 + SWWV, 3 - 7 * SWWV), W_King);
         W_King.GetComponent<Base_Controller>().myPosition = new Vector2(-1 + SWWV, 3 - 7 * SWWV);
+        AllUnits.Add(W_King);
 
 
         PromotionBoardBlack = Instantiate(PromotionBoardBlack_Prefab);
         PromotionBoardWhite = Instantiate(PromotionBoardWhite_Prefab);
+        AllUnits.Add(PromotionBoardBlack);
+        AllUnits.Add(PromotionBoardWhite);
         PromotionBoardBlack.SetActive(false);
         PromotionBoardWhite.SetActive(false);
 
