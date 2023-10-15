@@ -18,12 +18,9 @@ namespace DummyClient
 			{
 				foreach(ServerSession session in _sessions)
 				{
-					//C_Move movePacket = new C_Move();
-					
+					C_RequestMatching movePacket = new C_RequestMatching();
 
-     //               ArraySegment<byte> segment = movePacket.Serialize();
-
-					//session.Send(movePacket.Serialize());
+					session.Send(movePacket.Serialize());
 				}
 			}
 		}

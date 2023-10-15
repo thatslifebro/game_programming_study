@@ -15,34 +15,44 @@ public class PlayerManager
     public void Add(S_PlayerList packet)
     {
         //Object obj = Resources.Load("Player");
-
+        GameObject.Find("Title").GetComponent<TMP_Text>().text = $"Online Player List ({packet.players.Count})";
+        GameObject MyText = null;
         foreach (S_PlayerList.Player p in packet.players)
         {
             GameObject IdText_Prefab = Resources.Load<GameObject>("Prefabs/PlayerIdText");
             GameObject IdText = Object.Instantiate(IdText_Prefab) as GameObject;
             IdText.name = p.playerId.ToString();
-            IdText.GetComponent<TMP_Text>().text = p.playerId.ToString();
+            if (p.isInGame)
+            {
+                IdText.GetComponent<TMP_Text>().text = $"{ p.playerId.ToString()}  - In Game";
+            }
+            else
+            {
+                IdText.GetComponent<TMP_Text>().text = p.playerId.ToString();
+            }
+            
+            if (p.isSelf)
+            {
+                IdText.GetComponent<TMP_Text>().color = Color.green;
+                MyText = IdText;
+            }
+            
 
             IdText.transform.SetParent(GameObject.Find("PlayerIdContent").transform);
             
         }
+        if(MyText)
+            MyText.transform.SetSiblingIndex(1);
     }
 
     public void EnterGame(S_ResponseMatching packet)
     {
         GameObject otherPlayerText = GameObject.Find("OtherPlayer");
-        otherPlayerText.GetComponent<TMP_Text>().text = $"You\n VS \n{packet.otherPlayerId}";
+        otherPlayerText.GetComponent<TMP_Text>().text = $"You\n VS \n  {packet.otherPlayerId}";
         otherPlayerText.GetComponent<TMP_Text>().color = Color.red;
         GameObject unitController = GameObject.Find("UnitController");
         unitController.GetComponent<UnitController>().StartWithWhiteView = packet.amIWhite;
         unitController.GetComponent<UnitController>().ResetGame();
-        //if (packet.playerId == _myPlayer.PlayerId) return;
-        //Object obj = Resources.Load("Player");
-        //GameObject go = Object.Instantiate(obj) as GameObject;
-
-        //Player player = go.AddComponent<Player>();
-        //player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
-        //_players.Add(packet.playerId, player);
     }
 
     public void LeaveGame(S_BroadcastLeaveGame packet)
@@ -76,6 +86,17 @@ public class PlayerManager
         //        player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
         //    }
         //}
+    }
+
+    public void GameOver(S_GameOver packet)
+    {
+        GameObject GameResult = GameObject.Find("GameResult");
+        if (packet.Draw)
+            GameResult.GetComponent<TMP_Text>().text = "Draw";
+        else if (packet.youWin)
+            GameResult.GetComponent<TMP_Text>().text = "You Win!";
+        else
+            GameResult.GetComponent<TMP_Text>().text = "You Lose!";
     }
 
 }

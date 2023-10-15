@@ -8,22 +8,20 @@ class PacketHandler
 {
     public static void C_RequestMatchingHandler(PacketSession session, IPacket packet)
     {
+        ClientSession clientSession = session as ClientSession;
 
+        if(clientSession.gameRoom == null)
+        {
+            GameRoomManager.Instance.PushWaitingSession(clientSession);
+        }
+        
     }
 
     public static void C_LeaveGameHandler(PacketSession session, IPacket packet)
 	{
 		ClientSession clientSession = session as ClientSession;
-
-		if(clientSession.gameRoom == null)
-			return;
-		else
-		{
-			GameRoom room = clientSession.gameRoom;
-			room.Push(
-				() => room.Leave(clientSession)
-				);
-		}
+        
+        GameRoomManager.Instance.LeaveSession(clientSession);
 
     }
 

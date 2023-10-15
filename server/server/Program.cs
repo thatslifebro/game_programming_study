@@ -16,12 +16,24 @@ namespace Server
     {
         public static WaitingRoom waitingRoom = new WaitingRoom();
 
+        public static List<GameRoom> gameRooms = new List<GameRoom>();
+
         static Listener _listener = new Listener();
 
-        static void FlushRoom()
+        static void FlushWaitingRoom()
         {
             waitingRoom.Push(() => waitingRoom.Flush());
-            JobTimer.Instance.Push(FlushRoom, 250);
+            JobTimer.Instance.Push(FlushWaitingRoom, 250);
+        }
+
+        static void FlushGameRooms()
+        {
+            
+            foreach(KeyValuePair<GameRoom,List<ClientSession>> pair in GameRoomManager.Instance._gameRooms)
+            {
+                pair.Key.Push(() => pair.Key.Flush());
+            }
+            JobTimer.Instance.Push(FlushGameRooms, 250);
         }
 
         static void Main(string[] args)
@@ -40,8 +52,9 @@ namespace Server
             _listener.init(() => { return SessionManager.Instance.Generate(); }, endPoint);
             Console.WriteLine("Listenning...");
 
-           JobTimer.Instance.Push(FlushRoom);
-            
+            JobTimer.Instance.Push(FlushWaitingRoom);
+            JobTimer.Instance.Push(FlushGameRooms);
+
             while (true)
             {
                 JobTimer.Instance.Flush();

@@ -188,13 +188,16 @@ public class S_PlayerList : IPacket
 {
     public class Player
 	{
-	    public bool isInGame;
+	    public bool isSelf;
+		public bool isInGame;
 		public int playerId;
 	
 	    public bool Write(Span<byte> s,ref ushort count)
 	    {
 	        bool success = true;
-	        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.isInGame);
+	        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.isSelf);
+			count += sizeof(bool);
+			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.isInGame);
 			count += sizeof(bool);
 			success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.playerId);
 			count += sizeof(int);
@@ -203,7 +206,9 @@ public class S_PlayerList : IPacket
 	
 	    public void Read(ReadOnlySpan<byte>s,ref ushort count)
 	    {
-	        this.isInGame = BitConverter.ToBoolean(s.Slice(count,s.Length-count));
+	        this.isSelf = BitConverter.ToBoolean(s.Slice(count,s.Length-count));
+			count += sizeof(bool);
+			this.isInGame = BitConverter.ToBoolean(s.Slice(count,s.Length-count));
 			count += sizeof(bool);
 			this.playerId = BitConverter.ToInt32(s.Slice(count,s.Length-count));
 			count += sizeof(int);

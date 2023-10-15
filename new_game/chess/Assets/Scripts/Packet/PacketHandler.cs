@@ -18,8 +18,8 @@ class PacketHandler
     {
         S_GameOver pkt = packet as S_GameOver;
         ServerSession serverSession = session as ServerSession;
-
-        //PlayerManager.Instance.EnterGame(pkt);
+        Debug.Log($"Gameover packet {pkt.Draw},{pkt.youWin},{pkt.youLose}");
+        PlayerManager.Instance.GameOver(pkt);
     }
     
 
@@ -35,7 +35,7 @@ class PacketHandler
     {
         S_PlayerList pkt = packet as S_PlayerList;
         ServerSession serverSession = session as ServerSession;
-
+        
         PlayerManager.Instance.Add(pkt);
     }
 

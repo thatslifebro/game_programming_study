@@ -34,11 +34,15 @@ namespace server
 
         public void Enter(ClientSession session)
         {
-            //player추가부분 
-            _sessions.Add(session);
-            session.waitingRoom = this;
+            //player추가부분
+            lock (_lock)
+            {
+                _sessions.Add(session);
+                session.waitingRoom = this;
+            }
+            
 
-            //새로온애한테 모든 목록전송
+            //모든 목록전송
             S_PlayerList players = new S_PlayerList();
             foreach (ClientSession s in _sessions)
             {
@@ -46,6 +50,7 @@ namespace server
                 if (s.gameRoom != null) inGame = true;
                 players.players.Add(new S_PlayerList.Player()
                 {
+                    isSelf = session.SessionId == s.SessionId,
                     playerId = s.SessionId,
                     isInGame = inGame
                 });
@@ -55,8 +60,11 @@ namespace server
         }
         public void Leave(ClientSession session)
         {
-            //player 제거 
-            _sessions.Remove(session);
+            //player 제거
+            lock (_lock)
+            {
+                _sessions.Remove(session);
+            }
             // 모두에게 알린다
             S_PlayerList players = new S_PlayerList();
             foreach (ClientSession s in _sessions)

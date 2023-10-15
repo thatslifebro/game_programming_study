@@ -29,6 +29,11 @@ namespace Server
 
         public override void OnDisconnected(EndPoint endPoint)
         {
+            if (gameRoom != null)
+            {
+                GameRoomManager.Instance.LeaveSession(this);
+            }
+
             if(Program.waitingRoom != null)
             {
                 WaitingRoom room = waitingRoom;

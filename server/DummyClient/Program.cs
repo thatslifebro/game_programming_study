@@ -28,19 +28,19 @@ namespace DummyClient
 
             Connector connector = new Connector();
 
-            connector.Connect(endPoint, SessionManager.Instance.Generate, 10) ;
+            connector.Connect(endPoint, SessionManager.Instance.Generate, 11) ;
 
             
             while (true)
             {
-                //try
-                //{
-                //    //SessionManager.Instance.SendForEach();
-                //}
-                //catch (Exception e)
-                //{
-                //    Console.WriteLine(e.ToString());
-                //}
+                try
+                {
+                    SessionManager.Instance.SendForEach();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
 
                 Thread.Sleep(250);
             }

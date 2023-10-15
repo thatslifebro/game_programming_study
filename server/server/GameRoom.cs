@@ -39,36 +39,48 @@ namespace server
             session.gameRoom = this;
 
 			//새로온애한테 모든 목록전송
-			S_PlayerList players = new S_PlayerList();
-			foreach(ClientSession s in _sessions)
+			if (_sessions.Count > 1)
 			{
-				players.players.Add(new S_PlayerList.Player()
+				S_ResponseMatching pkt0 = new S_ResponseMatching()
 				{
-					
-					playerId = s.SessionId,
+					amIWhite = true,
+					otherPlayerId = _sessions[1].SessionId,
+				};
 
-				});
-			}
-			session.Send(players.Serialize());
-
-			//다른애들한테 새로온애 알려주기
-			//S_BroadcastEnterGame enter = new S_BroadcastEnterGame();
-			//enter.playerId = session.SessionId;
-			//enter.posX = 0;
-   //         enter.posY = 0;
-   //         enter.posZ = 0;
-			//Broadcast(enter.Serialize());
+                S_ResponseMatching pkt1 = new S_ResponseMatching()
+                {
+                    amIWhite = false,
+                    otherPlayerId = _sessions[0].SessionId,
+                };
+				_sessions[0].Send(pkt0.Serialize());
+                _sessions[1].Send(pkt1.Serialize());
+            }
 
 
         }
 		public void Leave(ClientSession session)
 		{
-			//player 제거 
-   //         _sessions.Remove(session);
-			//// 모두에게 알린다
-			//S_BroadcastLeaveGame leave = new S_BroadcastLeaveGame();
-			//leave.playerId = session.SessionId;
-			//Broadcast(leave.Serialize());
+			//player 제거
+			S_GameOver pkt0 = new S_GameOver()
+			{
+				Draw = false,
+				youLose = true,
+				youWin = false
+            };
+			session.Send(pkt0.Serialize());
+			_sessions.Remove(session);
+			Console.WriteLine("gameover packet 보내기");
+            session.gameRoom = null;
+
+            S_GameOver pkt1 = new S_GameOver()
+			{
+				Draw = false,
+				youLose=false,
+				youWin=true
+			};
+			_sessions[0].Send(pkt1.Serialize());
+			_sessions[0].gameRoom = null;
+			_sessions.Clear();
 		}
 
 		public void Move(ClientSession session, C_Move movePacket)
