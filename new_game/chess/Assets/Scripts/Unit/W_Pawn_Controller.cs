@@ -18,6 +18,7 @@ public class W_Pawn_Controller : Pawn
         promotion = false;
         int swwv = GameObject.Find("UnitController").GetComponent<UnitController>().SWWV;
         AmIWhite = true;
+        togo.Clear();
         if (swwv == 1)
         {
             togo.Add(new Vector2(0, 1));

@@ -85,17 +85,18 @@ namespace server
 
 		public void Move(ClientSession session, C_Move movePacket)
 		{
-			////좌표바꾸기
-			//session.PosX = movePacket.posX;
-   //         session.PosY = movePacket.posY;
-   //         session.PosZ = movePacket.posZ;
-			////모두에게 알리
-			//S_BroadcastMove move = new S_BroadcastMove();
-			//move.playerId = session.SessionId;
-			//move.posX = session.PosX;
-   //         move.posY = session.PosY;
-   //         move.posZ = session.PosZ;
-			//Broadcast(move.Serialize());
+
+			S_BroadcastMove move = new S_BroadcastMove()
+			{
+				// 여기서 검증하고 보내야할 필요 있음. 게임이 끝났는지도 검즈
+				playerId = session.SessionId,
+				prevX = -1 - movePacket.prevX,
+				prevY = -1 - movePacket.prevY,
+				nextX = -1 - movePacket.nextX,
+				nextY = -1 - movePacket.nextY,
+				promotion= movePacket.promotion
+			};
+			Broadcast(move.Serialize());
         }
 	}
 }

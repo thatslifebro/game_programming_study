@@ -270,6 +270,7 @@ public class C_Move : IPacket
 	public int prevY;
 	public int nextX;
 	public int nextY;
+	public int promotion;
 
     public ushort Protocol { get { return (ushort)PacketId.C_Move; } }
 
@@ -291,6 +292,8 @@ public class C_Move : IPacket
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.nextX);
 		count += sizeof(int);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.nextY);
+		count += sizeof(int);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.promotion);
 		count += sizeof(int);
         success &= BitConverter.TryWriteBytes(s, count);
 
@@ -315,6 +318,8 @@ public class C_Move : IPacket
 		count += sizeof(int);
 		this.nextY = BitConverter.ToInt32(s.Slice(count,s.Length-count));
 		count += sizeof(int);
+		this.promotion = BitConverter.ToInt32(s.Slice(count,s.Length-count));
+		count += sizeof(int);
     }
 }
 
@@ -326,6 +331,7 @@ public class S_BroadcastMove : IPacket
 	public int prevY;
 	public int nextX;
 	public int nextY;
+	public int promotion;
 
     public ushort Protocol { get { return (ushort)PacketId.S_BroadcastMove; } }
 
@@ -349,6 +355,8 @@ public class S_BroadcastMove : IPacket
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.nextX);
 		count += sizeof(int);
 		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.nextY);
+		count += sizeof(int);
+		success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length-count), this.promotion);
 		count += sizeof(int);
         success &= BitConverter.TryWriteBytes(s, count);
 
@@ -374,6 +382,8 @@ public class S_BroadcastMove : IPacket
 		this.nextX = BitConverter.ToInt32(s.Slice(count,s.Length-count));
 		count += sizeof(int);
 		this.nextY = BitConverter.ToInt32(s.Slice(count,s.Length-count));
+		count += sizeof(int);
+		this.promotion = BitConverter.ToInt32(s.Slice(count,s.Length-count));
 		count += sizeof(int);
     }
 }

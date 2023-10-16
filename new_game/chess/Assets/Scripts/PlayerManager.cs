@@ -12,9 +12,23 @@ public class PlayerManager
 
     public static PlayerManager Instance { get; } = new PlayerManager();
 
+    public int myId;
+
     public void Add(S_PlayerList packet)
     {
         //Object obj = Resources.Load("Player");
+        GameObject PlayerIdContent = GameObject.Find("PlayerIdContent");
+        Transform[] children = PlayerIdContent.GetComponentsInChildren<Transform>();
+        if(children != null)
+        {
+            for(int i = 2; i < children.Length; i++)
+            {
+                if (children[i] != PlayerIdContent.transform)
+                {
+                    Object.Destroy(children[i].gameObject);
+                }
+            }
+        }
         GameObject.Find("Title").GetComponent<TMP_Text>().text = $"Online Player List ({packet.players.Count})";
         GameObject MyText = null;
         foreach (S_PlayerList.Player p in packet.players)
@@ -33,13 +47,13 @@ public class PlayerManager
             
             if (p.isSelf)
             {
+                myId = p.playerId;
                 IdText.GetComponent<TMP_Text>().color = Color.green;
                 MyText = IdText;
             }
             
+            IdText.transform.SetParent(GameObject.Find("PlayerIdContent").transform,false);
 
-            IdText.transform.SetParent(GameObject.Find("PlayerIdContent").transform);
-            
         }
         if(MyText)
             MyText.transform.SetSiblingIndex(1);
@@ -48,11 +62,11 @@ public class PlayerManager
     public void EnterGame(S_ResponseMatching packet)
     {
         GameObject otherPlayerText = GameObject.Find("OtherPlayer");
+        
         otherPlayerText.GetComponent<TMP_Text>().text = $"You\n VS \n  {packet.otherPlayerId}";
         otherPlayerText.GetComponent<TMP_Text>().color = Color.red;
         GameObject unitController = GameObject.Find("UnitController");
-        unitController.GetComponent<UnitController>().StartWithWhiteView = packet.amIWhite;
-        unitController.GetComponent<UnitController>().ResetGame();
+        unitController.GetComponent<UnitController>().ResetGame(packet.amIWhite);
     }
 
     public void LeaveGame(S_BroadcastLeaveGame packet)
@@ -74,18 +88,11 @@ public class PlayerManager
 
     public void Move(S_BroadcastMove packet)
     {
-        //if (_myPlayer.PlayerId == packet.playerId)
-        //{
-        //    _myPlayer.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
-        //}
-        //else
-        //{
-        //    Player player = null;
-        //    if (_players.TryGetValue(packet.playerId, out player))
-        //    {
-        //        player.transform.position = new Vector3(packet.posX, packet.posY, packet.posZ);
-        //    }
-        //}
+        if (packet.playerId == myId) return;
+
+        Vector2 prev = new Vector2(packet.prevX, packet.prevY);
+        Vector2 next = new Vector2(packet.nextX, packet.nextY);
+        GameObject.Find("UnitController").GetComponent<UnitController>().OtherPlayerMove(prev,next,packet.promotion);
     }
 
     public void GameOver(S_GameOver packet)

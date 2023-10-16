@@ -27,20 +27,20 @@ class PacketHandler
 
     public static void C_MoveHandler(PacketSession session, IPacket packet)
     {
-        //C_Move movePacket = packet as C_Move;
-        //ClientSession clientSession = session as ClientSession;
+        C_Move movePacket = packet as C_Move;
+        ClientSession clientSession = session as ClientSession;
 
-        //if (clientSession.gameRoom == null)
-        //    return;
-        //else
-        //{
-        //    Console.WriteLine($"{movePacket.posX},{movePacket.posZ}");
-        //    GameRoom room = clientSession.gameRoom;
-        //    room.Push(
-        //        () => room.Move(clientSession, movePacket)
-        //        );
-        //}
-        
+        if (clientSession.gameRoom == null)
+            return;
+        else
+        {
+            Console.WriteLine($"{movePacket.prevX},{movePacket.prevY} to {movePacket.nextX},{movePacket.nextY}  promotion={movePacket.promotion}");
+            GameRoom room = clientSession.gameRoom;
+            room.Push(
+                () => room.Move(clientSession, movePacket)
+                );
+        }
+
     }
 
 }

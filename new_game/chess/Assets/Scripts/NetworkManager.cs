@@ -22,8 +22,8 @@ public class NetworkManager : MonoBehaviour
         //IPAddress ipAddr = ipHost.AddressList[0];
         //IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
-        IPAddress ipAddr = IPAddress.Parse("127.0.0.1");
-        IPEndPoint endPoint = new IPEndPoint(ipAddr, 8888);
+        IPAddress ipAddr = IPAddress.Parse("3.34.3.46");
+        IPEndPoint endPoint = new IPEndPoint(ipAddr, 7676);
 
         Debug.Log(endPoint);
 

@@ -16,6 +16,7 @@ public class B_Pawn_Controller : Pawn
         IsRook = false;
         IsPawn = true;
         EnPassant = false;
+        togo.Clear();
         int swwv = GameObject.Find("UnitController").GetComponent<UnitController>().SWWV;
         AmIWhite = false;
         IsAlive = true;
@@ -33,7 +34,7 @@ public class B_Pawn_Controller : Pawn
             togo.Add(new Vector2(0, -2));
             togo.Add(new Vector2(-1, -1));
             togo.Add(new Vector2(1, -1));
-        }  
+        }
     }
 
     public override void ChangeTogo(int swwv)

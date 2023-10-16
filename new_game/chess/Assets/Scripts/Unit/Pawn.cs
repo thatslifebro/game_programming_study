@@ -82,18 +82,22 @@ public abstract class Pawn : Base_Controller
         //아무도 없는곳 
         if (!UnitMap.TryGetValue(target, out targetUnit))
         {
-            if(UnitMap.TryGetValue(new Vector2(target.x, target.y - togo[3].y), out targetUnit))
+            if (target.x != myPosition.x)
             {
-                if (targetUnit.GetComponent<Base_Controller>().IsPawn)
+                if (UnitMap.TryGetValue(new Vector2(target.x, target.y - togo[3].y), out targetUnit))
                 {
-                    if (targetUnit.GetComponent<Pawn>().EnPassant)
+                    if (targetUnit.GetComponent<Base_Controller>().IsPawn && targetUnit.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
                     {
-                        UnitMap.Remove(new Vector2(target.x, target.y - togo[3].y));
-                        targetUnit.SetActive(false);
+                        if (targetUnit.GetComponent<Pawn>().EnPassant)
+                        {
+                            UnitMap.Remove(new Vector2(target.x, target.y - togo[3].y));
+                            targetUnit.SetActive(false);
+                        }
                     }
+
                 }
-                
             }
+            
             UnitMap.Remove(myPosition);
             UnitMap.Add(target, this.gameObject);
             if (MyKingChecked())
@@ -105,7 +109,7 @@ public abstract class Pawn : Base_Controller
             else
             {
                 FirstFalse();
-                //앙파상설
+                //앙파상설정 
                 if(target.y - myPosition.y==-2 || target.y - myPosition.y == 2)
                 {
                     EnPassant = true;
@@ -209,14 +213,14 @@ public abstract class Pawn : Base_Controller
             }
             else if (UnitMap.TryGetValue(dest, out temp) == true && i != 1)
             {
-                if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
+                if (i == 0)
+                {
+                    blocked = true;
+                }
+                else if (temp.GetComponent<Base_Controller>().AmIWhite != AmIWhite)
                 {
                     if (PointerMap.TryGetValue(dest, out temp))
                         temp.SetActive(true);
-                }
-                else if (i == 0)
-                {
-                    blocked = true;
                 }
             }
         }

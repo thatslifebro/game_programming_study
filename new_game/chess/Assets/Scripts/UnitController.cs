@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
+
 using UnityEngine;
 using UnityEngine.Tilemaps;
+
 
 
 public class UnitController : MonoBehaviour
@@ -51,13 +52,20 @@ public class UnitController : MonoBehaviour
     public GameObject EnPaccantUnit;
     public bool enPaccant;
 
+
+    NetworkManager _network;
+    public bool InGame=false;
+    public bool AMIWhite;
+    Vector2 prevPosition;
+    
     void Start()
     {
+        _network = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         turn = 1;
         Camera = GameObject.Find("Main Camera").GetComponent<Camera>();
         tilemap = GameObject.Find("Tilemap").GetComponent<Tilemap>();
-        StartWithWhiteView = true;
-        TurnIsWhite = StartWithWhiteView;
+        StartWithWhiteView = false;
+        TurnIsWhite = true;
         promotion = false;
         enPaccant = false;
         SWWV = 0;
@@ -73,7 +81,27 @@ public class UnitController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (mode!=GameMode.StartMenu && Input.GetMouseButtonDown(0))
+        if (mode == GameMode.StartMenu) return;
+        else if (mode == GameMode.MultiPlay && Input.GetMouseButtonDown(0) && InGame)
+        {
+            MousePosition = Input.mousePosition;
+            MousePosition = Camera.ScreenToWorldPoint(MousePosition);
+            Vector2 clickPosition = new Vector2(tilemap.WorldToCell(MousePosition).x, tilemap.WorldToCell(MousePosition).y);
+            GameObject unit;
+            GameObject pointer;
+
+
+            bool clickedUnitOrNot = UnitMap.TryGetValue(clickPosition, out unit);
+            bool clickBoard = PointerMap.TryGetValue(clickPosition, out pointer);
+
+            if (promotion)
+            {
+                if (clickPosition.x < 7 && clickPosition.x > 4 && clickPosition.y > -2 && clickPosition.y < 2)
+                    PromotionHandler(clickPosition);
+            }
+            else if (clickBoard && AMIWhite==TurnIsWhite) ClickBoardHandler(clickedUnitOrNot, unit, pointer, clickPosition);
+        }
+        else if ((mode==GameMode.SinglePlay && Input.GetMouseButtonDown(0)) || mode==GameMode.MultiPlay && Input.GetMouseButtonDown(0) && !InGame)
         {
             MousePosition = Input.mousePosition;
             MousePosition = Camera.ScreenToWorldPoint(MousePosition);
@@ -84,7 +112,6 @@ public class UnitController : MonoBehaviour
 
             bool clickedUnitOrNot = UnitMap.TryGetValue(clickPosition, out unit);
             bool clickBoard = PointerMap.TryGetValue(clickPosition, out pointer);
-            Debug.Log($"{clickedUnitOrNot}");
             
             if (promotion)
             {
@@ -119,6 +146,7 @@ public class UnitController : MonoBehaviour
         {
             if (chosenUnit.GetComponent<Base_Controller>().Move(clickPosition))
             {
+                prevPosition = chosenUnitPosition;
                 chosenUnitPosition = clickPosition;
                 if (chosenUnit.GetComponent<Base_Controller>().IsPawn)
                 {
@@ -129,7 +157,12 @@ public class UnitController : MonoBehaviour
                             PromotionBoardWhite.SetActive(true);
                         else
                             PromotionBoardBlack.SetActive(true);
+                        
                         return;
+                    }
+                    else
+                    {
+                        Move(prevPosition, clickPosition);
                     }
 
                     if (enPaccant == true)
@@ -145,6 +178,7 @@ public class UnitController : MonoBehaviour
                         enPaccant = true;
                     }
                 }
+                
                 TurnIsWhite = !TurnIsWhite;
             }
             choosing = false;
@@ -191,102 +225,266 @@ public class UnitController : MonoBehaviour
 
     }
 
+    public void OtherPlayerMove(Vector2 prevPosition, Vector2 nextPosition, int promotion)
+    {
+        GameObject unit;
+        
+        if (UnitMap.TryGetValue(prevPosition, out unit))
+        {
+            unit.GetComponent<Base_Controller>().Move(nextPosition);
+            unit.GetComponent<Base_Controller>().ToggleSelected();
+        }
+        if(promotion !=-1)
+        {
+            UnitMap.TryGetValue(nextPosition, out unit);
+            if (!TurnIsWhite)
+            {
+
+                    switch (promotion)
+                    {
+                        case 0:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject B_Knight_Prefab = Resources.Load<GameObject>("Prefabs/B_Knight_2D");
+                            GameObject B_Knight = Instantiate(B_Knight_Prefab);
+                            B_Knight.transform.position = unit.transform.position;
+                            B_Knight.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, B_Knight);
+                            
+                            break;
+                        case 1:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject B_Bishop_Prefab = Resources.Load<GameObject>("Prefabs/B_Bishop_2D");
+                            GameObject B_Bishop = Instantiate(B_Bishop_Prefab);
+                            B_Bishop.transform.position = unit.transform.position;
+                            B_Bishop.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, B_Bishop);
+                           
+                            break;
+                        case 2:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject B_Rook_Prefab = Resources.Load<GameObject>("Prefabs/B_Rook_2D");
+                            GameObject B_Rook = Instantiate(B_Rook_Prefab);
+                            B_Rook.transform.position = unit.transform.position;
+                            B_Rook.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, B_Rook);
+                            
+                            break;
+                        case 3:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject B_Queen_Prefab = Resources.Load<GameObject>("Prefabs/B_Queen_2D");
+                            GameObject B_Queen = Instantiate(B_Queen_Prefab);
+                            B_Queen.transform.position = unit.transform.position;
+                            B_Queen.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, B_Queen);
+                            
+                            break;
+                        default:
+                            break;
+                    }
+                PromotionBoardWhite.SetActive(false);
+            }
+                
+            
+
+            else
+            {
+                
+                    switch (promotion)
+                    {
+                        case 0:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject W_Knight_Prefab = Resources.Load<GameObject>("Prefabs/W_Knight_2D");
+                            GameObject W_Knight = Instantiate(W_Knight_Prefab);
+                            W_Knight.transform.position = unit.transform.position;
+                            W_Knight.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, W_Knight);
+                            
+                            break;
+                        case 1:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject W_Bishop_Prefab = Resources.Load<GameObject>("Prefabs/W_Bishop_2D");
+                            GameObject W_Bishop = Instantiate(W_Bishop_Prefab);
+                            W_Bishop.transform.position = unit.transform.position;
+                            W_Bishop.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, W_Bishop);
+                            
+                            break;
+                        case 2:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject W_Rook_Prefab = Resources.Load<GameObject>("Prefabs/W_Rook_2D");
+                            GameObject W_Rook = Instantiate(W_Rook_Prefab);
+                            W_Rook.transform.position = unit.transform.position;
+                            W_Rook.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, W_Rook);
+                            
+                            break;
+                        case 3:
+                            UnitMap.Remove(nextPosition);
+                            unit.SetActive(false);
+                            GameObject W_Queen_Prefab = Resources.Load<GameObject>("Prefabs/W_Queen_2D");
+                            GameObject W_Queen = Instantiate(W_Queen_Prefab);
+                            W_Queen.transform.position = unit.transform.position;
+                            W_Queen.GetComponent<Base_Controller>().myPosition = nextPosition;
+                            UnitMap.Add(nextPosition, W_Queen);
+                            
+                            break;
+                        default:
+                            break;
+                    }
+                
+                PromotionBoardWhite.SetActive(false);
+            }
+            
+        }
+
+
+        TurnIsWhite = !TurnIsWhite;
+    }
+
+    void Move(Vector2 prevPosition, Vector2 nextPosition, int promotion = -1)
+    {
+        C_Move pkt = new C_Move()
+        {
+            prevX = (int) prevPosition.x,
+            prevY = (int) prevPosition.y,
+            nextX = (int) nextPosition.x,
+            nextY = (int) nextPosition.y,
+            promotion = promotion
+        };
+
+        _network.Send(pkt.Serialize());
+    }
+
     void PromotionHandler(Vector2 clickPosition)
     {
+        bool promote = false;
+        int whichUnit=0;
+        
         if (!TurnIsWhite)
         {
-            switch (clickPosition)
+            while (!promote)
             {
-                case Vector2 v when v.Equals(new Vector2(5,0)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject B_Knight_Prefab = Resources.Load<GameObject>("Prefabs/B_Knight_2D");
-                    GameObject B_Knight = Instantiate(B_Knight_Prefab);
-                    B_Knight.transform.position = chosenUnit.transform.position;
-                    B_Knight.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, B_Knight);
-                    break;
-                case Vector2 v when v.Equals(new Vector2(6, 0)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject B_Bishop_Prefab = Resources.Load<GameObject>("Prefabs/B_Bishop_2D");
-                    GameObject B_Bishop = Instantiate(B_Bishop_Prefab);
-                    B_Bishop.transform.position = chosenUnit.transform.position;
-                    B_Bishop.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, B_Bishop);
-                    break;
-                case Vector2 v when v.Equals(new Vector2(5, -1)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject B_Rook_Prefab = Resources.Load<GameObject>("Prefabs/B_Rook_2D");
-                    GameObject B_Rook = Instantiate(B_Rook_Prefab);
-                    B_Rook.transform.position = chosenUnit.transform.position;
-                    B_Rook.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, B_Rook);
-                    break;
-                case Vector2 v when v.Equals(new Vector2(6,-1)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject B_Queen_Prefab = Resources.Load<GameObject>("Prefabs/B_Queen_2D");
-                    GameObject B_Queen = Instantiate(B_Queen_Prefab);
-                    B_Queen.transform.position = chosenUnit.transform.position;
-                    B_Queen.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, B_Queen);
-                    break;
-                default:
-                    break;
+                switch (clickPosition)
+                {
+                    case Vector2 v when v.Equals(new Vector2(5,0)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject B_Knight_Prefab = Resources.Load<GameObject>("Prefabs/B_Knight_2D");
+                        GameObject B_Knight = Instantiate(B_Knight_Prefab);
+                        B_Knight.transform.position = chosenUnit.transform.position;
+                        B_Knight.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, B_Knight);
+                        promote = true;
+                        whichUnit = 0;
+                        break;
+                    case Vector2 v when v.Equals(new Vector2(6, 0)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject B_Bishop_Prefab = Resources.Load<GameObject>("Prefabs/B_Bishop_2D");
+                        GameObject B_Bishop = Instantiate(B_Bishop_Prefab);
+                        B_Bishop.transform.position = chosenUnit.transform.position;
+                        B_Bishop.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, B_Bishop);
+                        promote = true;
+                        whichUnit = 1;
+                        break;
+                    case Vector2 v when v.Equals(new Vector2(5, -1)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject B_Rook_Prefab = Resources.Load<GameObject>("Prefabs/B_Rook_2D");
+                        GameObject B_Rook = Instantiate(B_Rook_Prefab);
+                        B_Rook.transform.position = chosenUnit.transform.position;
+                        B_Rook.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, B_Rook);
+                        promote = true;
+                        whichUnit = 2;
+                        break;
+                    case Vector2 v when v.Equals(new Vector2(6,-1)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject B_Queen_Prefab = Resources.Load<GameObject>("Prefabs/B_Queen_2D");
+                        GameObject B_Queen = Instantiate(B_Queen_Prefab);
+                        B_Queen.transform.position = chosenUnit.transform.position;
+                        B_Queen.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, B_Queen);
+                        promote = true;
+                        whichUnit = 3;
+                        break;
+                    default:
+                        break;
+                }
             }
             PromotionBoardWhite.SetActive(false);
         }
 
         else
         {
-            switch (clickPosition)
+            while (!promote)
             {
-                case Vector2 v when v.Equals(new Vector2(5, 0)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject W_Knight_Prefab = Resources.Load<GameObject>("Prefabs/W_Knight_2D");
-                    GameObject W_Knight = Instantiate(W_Knight_Prefab);
-                    W_Knight.transform.position = chosenUnit.transform.position;
-                    W_Knight.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, W_Knight);
-                    break;
-                case Vector2 v when v.Equals(new Vector2(6, 0)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject W_Bishop_Prefab = Resources.Load<GameObject>("Prefabs/W_Bishop_2D");
-                    GameObject W_Bishop = Instantiate(W_Bishop_Prefab);
-                    W_Bishop.transform.position = chosenUnit.transform.position;
-                    W_Bishop.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, W_Bishop);
-                    break;
-                case Vector2 v when v.Equals(new Vector2(5, -1)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject W_Rook_Prefab = Resources.Load<GameObject>("Prefabs/W_Rook_2D");
-                    GameObject W_Rook = Instantiate(W_Rook_Prefab);
-                    W_Rook.transform.position = chosenUnit.transform.position;
-                    W_Rook.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, W_Rook);
-                    break;
-                case Vector2 v when v.Equals(new Vector2(6, -1)):
-                    UnitMap.Remove(chosenUnitPosition);
-                    chosenUnit.SetActive(false);
-                    GameObject W_Queen_Prefab = Resources.Load<GameObject>("Prefabs/W_Queen_2D");
-                    GameObject W_Queen = Instantiate(W_Queen_Prefab);
-                    W_Queen.transform.position = chosenUnit.transform.position;
-                    W_Queen.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
-                    UnitMap.Add(chosenUnitPosition, W_Queen);
-                    break;
-                default:
-                    break;
+                switch (clickPosition)
+                {
+                    case Vector2 v when v.Equals(new Vector2(5, 0)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject W_Knight_Prefab = Resources.Load<GameObject>("Prefabs/W_Knight_2D");
+                        GameObject W_Knight = Instantiate(W_Knight_Prefab);
+                        W_Knight.transform.position = chosenUnit.transform.position;
+                        W_Knight.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, W_Knight);
+                        promote = true;
+                        whichUnit = 0;
+                        break;
+                    case Vector2 v when v.Equals(new Vector2(6, 0)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject W_Bishop_Prefab = Resources.Load<GameObject>("Prefabs/W_Bishop_2D");
+                        GameObject W_Bishop = Instantiate(W_Bishop_Prefab);
+                        W_Bishop.transform.position = chosenUnit.transform.position;
+                        W_Bishop.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, W_Bishop);
+                        promote = true;
+                        whichUnit = 1;
+                        break;
+                    case Vector2 v when v.Equals(new Vector2(5, -1)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject W_Rook_Prefab = Resources.Load<GameObject>("Prefabs/W_Rook_2D");
+                        GameObject W_Rook = Instantiate(W_Rook_Prefab);
+                        W_Rook.transform.position = chosenUnit.transform.position;
+                        W_Rook.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, W_Rook);
+                        promote = true;
+                        whichUnit = 2;
+                        break;
+                    case Vector2 v when v.Equals(new Vector2(6, -1)):
+                        UnitMap.Remove(chosenUnitPosition);
+                        chosenUnit.SetActive(false);
+                        GameObject W_Queen_Prefab = Resources.Load<GameObject>("Prefabs/W_Queen_2D");
+                        GameObject W_Queen = Instantiate(W_Queen_Prefab);
+                        W_Queen.transform.position = chosenUnit.transform.position;
+                        W_Queen.GetComponent<Base_Controller>().myPosition = chosenUnitPosition;
+                        UnitMap.Add(chosenUnitPosition, W_Queen);
+                        promote = true;
+                        whichUnit = 3;
+                        break;
+                    default:
+                        break;
+                }
             }
             PromotionBoardWhite.SetActive(false);
         }
 
+        Move(prevPosition,chosenUnitPosition,whichUnit);
 
         promotion = false;
+        
         TurnIsWhite = !TurnIsWhite;
         choosing = false;
     }
@@ -317,12 +515,12 @@ public class UnitController : MonoBehaviour
         
     }
 
-    public void ResetGame()
+    public void ResetGame(bool whiteview = true)
     {
         DeadWhite.Clear();
         DeadBlack.Clear();
         UnitMap.Clear();
-        
+        AMIWhite = whiteview;
         foreach (GameObject obj in AllUnits)
         {
             Destroy(obj);
@@ -334,15 +532,16 @@ public class UnitController : MonoBehaviour
             PointerMap.TryGetValue(new Vector2(-4 + i % 8, 3 - (int)System.Math.Truncate((double)i / 8)), out temp);
             temp.SetActive(false);
         }
-        
 
-        StartWithWhiteView = true;
-        TurnIsWhite = StartWithWhiteView;
+
+        StartWithWhiteView = whiteview;
+        TurnIsWhite = true;
         promotion = false;
         enPaccant = false;
         SWWV = 0;
         if (StartWithWhiteView)
             SWWV = 1;
+        Debug.Log($"swwv :  {SWWV}");
         StartGame();
     }
 

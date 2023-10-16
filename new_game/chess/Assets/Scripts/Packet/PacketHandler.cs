@@ -12,6 +12,8 @@ class PacketHandler
 
 
         PlayerManager.Instance.EnterGame(pkt);
+        
+        GameObject.Find("UnitController").GetComponent<UnitController>().InGame = true;
     }
 
     public static void S_GameOverHandler(PacketSession session, IPacket packet)
@@ -20,6 +22,7 @@ class PacketHandler
         ServerSession serverSession = session as ServerSession;
         Debug.Log($"Gameover packet {pkt.Draw},{pkt.youWin},{pkt.youLose}");
         PlayerManager.Instance.GameOver(pkt);
+        GameObject.Find("UnitController").GetComponent<UnitController>().InGame = false;
     }
     
 
@@ -27,7 +30,7 @@ class PacketHandler
     {
         S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
         ServerSession serverSession = session as ServerSession;
-
+        GameObject.Find("UnitController").GetComponent<UnitController>().InGame = false;
         //PlayerManager.Instance.LeaveGame(pkt);
     }
 
@@ -41,9 +44,9 @@ class PacketHandler
 
     public static void S_BroadcastMoveHandler(PacketSession session, IPacket packet)
     {
-        //S_BroadcastMove pkt = packet as S_BroadcastMove;
-        //ServerSession serverSession = session as ServerSession;
+        S_BroadcastMove pkt = packet as S_BroadcastMove;
+        ServerSession serverSession = session as ServerSession;
 
-        //PlayerManager.Instance.Move(pkt);
+        PlayerManager.Instance.Move(pkt);
     }
 }
