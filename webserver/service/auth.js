@@ -1,5 +1,6 @@
 import pool from '../db/mysql.js';
 import bcrypt from 'bcrypt';
+import today from '../util/date.js';
 const saltRounds = 10;
 
 
@@ -38,10 +39,9 @@ export default class authService {
     if(rows[0]){
       throw new Error("사용 중인 이메일 입니다.");
     }
-    const now = Date();
-    console.log(now);
-    // const today = now.
-    // [rows, fields] = await conn.query(`INSERT INTO user (nickname, email, register_date, recent_login_date, etc, enc_pw, rating) VALUES( "${nickname}", "${email}", "${Date.now()}","${}","${}", "${}","${}")`);
+    const date = today();
+    
+    [rows, fields] = await conn.query(`INSERT INTO user (nickname, email, register_date, recent_login_date, etc, enc_pw, rating) VALUES( "${nickname}", "${email}", "${date}","${date}","${etc}", "${await bcrypt.hash(password, saltRounds)}",${1000})`);
 
     // console.log(rows);
     return rows;

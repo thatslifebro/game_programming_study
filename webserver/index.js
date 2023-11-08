@@ -22,6 +22,6 @@ app.use((err, req, res, next) => {
 });
 
 //서버열기 'localhost:3001'
-app.listen(3001, (req, res) => {
+app.listen(SERVER_PORT, (req, res) => {
   console.log('시작');
 });
